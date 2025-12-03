@@ -35,5 +35,6 @@ GPU - Integrated Graphics For Intel 5th Gen/Radeon 3000/GTX 970 (Tested On Intel
 
 
 Known Issues :
-Linux Libaries Failing To Load
-Closing Not Working (Fix : Click Shift Left)
+Linux : Libaries Failing To Load
+
+Windows : Closing Not Working (Fix : Click Shift Left)
