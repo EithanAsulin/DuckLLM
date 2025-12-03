@@ -1,4 +1,7 @@
 # DuckLLM
+
+To Install Use Git
+----------------------------
 DuckLLM Uses Qwen2.5:0.5b From Ollama Allowing It To Run On Windows &amp; Linux Even On Lower End Hardware.
 
 Ollama Is Required For The Installer To Work!
