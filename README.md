@@ -21,6 +21,13 @@ Ram - 12gb/16gb DDr4 (More Than Enough)
 GPU - Integrated Graphics For Intel 12th gen/Radeon 7000/GTX 1660 Super
 
 
+Requests :
+----------------------
+For Any Request You Can Message Me Personally On Discord
+(User : duck_ae)
+
+If Your Request Is Related To Anything Like Proccesing/Generating Images Sadly That Wouldn't be Possible Due to Vision Models Being Pretty Unstable And Heavy Even For My GPU (6800xt 16gb)
+
 
 Known Issues :
 ------------------
