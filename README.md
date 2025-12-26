@@ -27,7 +27,8 @@ Linux Requirements :
 i5 5200U/Ryzen 1000
 6gb DDR3 RAM
 Intel UHD 4000
-mm- Recommended -
+
+- Recommended -
 i5 8th Gen/Ryzen 3500x
 8-12GB RAM DDR4
 Integrated Graphics
