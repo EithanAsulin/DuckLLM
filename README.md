@@ -1,10 +1,11 @@
 # DuckLLM
+OPEN-GPLv3 License (Open Source)
 
-Release V1.0.0 Beta Out In Releases
+Release V1.0.0 STABLE (LINUX)/BETA (WINDOWS) Out In Releases
 ----------------------------
 DuckLLM Uses phi3:mini From Ollama Allowing It To Run On Windows Even On Lower End Hardware.
 
-Ollama & Is Required For The Installer To Work!
+Python & Ollama Is Required For The Installer To Work!
 
 Requirements
 --------------
@@ -20,6 +21,16 @@ i5 12th Gen Laptop (U Series)/Ryzen 3600x/i5 8th Gen (Should Run Without Delays 
 Ram - 12gb/16gb DDr4 (More Than Enough)
 GPU - Integrated Graphics For Intel 12th gen/Radeon 7000/GTX 1660 Super
 
+Linux Requirements :
+
+- Minimum -
+i5 5200U/Ryzen 1000
+6gb DDR3 RAM
+Intel UHD 4000
+mm- Recommended -
+i5 8th Gen/Ryzen 3500x
+8-12GB RAM DDR4
+Integrated Graphics
 
 Requests :
 ----------------------
@@ -30,7 +41,7 @@ If Your Request Is Related To Anything Like Proccesing/Generating Images Sadly T
 
 
 Known Issues :
-------------------
-Linux : Libaries Failing To Load (Why it Isnt Released Yet)
+-----------------------------------
+ 
 
-Windows : Closing Not Working (Fix : Click Shift Left)
+Installer Getting Stuck (Ollama Issue)
