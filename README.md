@@ -1,3 +1,6 @@
+# OFFICIAL SITE
+https://eithanasulin.github.io/DuckLLM/
+
 # DuckLLM
 OPEN-GPLv3 License (Open Source)
 
