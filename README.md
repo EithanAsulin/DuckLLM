@@ -1,7 +1,7 @@
 # DuckLLM
 OPEN-GPLv3 License (Open Source)
 
-Release V1.0.0 STABLE (LINUX)/BETA (WINDOWS) Out In Releases
+Release V1.5.0 STABLE Out In Releases
 ----------------------------
 DuckLLM Uses phi3:mini From Ollama Allowing It To Run On Windows Even On Lower End Hardware.
 
