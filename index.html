@@ -8,7 +8,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         html { scroll-behavior: smooth; }
-        body { background: #050507; color: #f4f4f5; font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; }
+        body { background: #050507; color: #f4f4f5; font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; transition: background 0.3s, color 0.3s; }
+        
+        /* THEME TOGGLE STYLES */
+        body.light-mode { background: #fdfdfd; color: #18181b; }
+        .light-mode .nav-glass { background: rgba(255, 255, 255, 0.8); border-bottom: 1px solid rgba(0,0,0,0.1); }
+        .light-mode .text-white { color: #18181b !important; }
+        .light-mode .text-zinc-400, .light-mode .text-zinc-500 { color: #52525b; }
+        .light-mode .card-base { background: #f4f4f5; border: 1px solid #e4e4e7; }
+        .light-mode .os-header { background: linear-gradient(90deg, #f1f1f4 0%, #e4e4e7 100%); border-bottom: 1px solid #e4e4e7; }
+        .light-mode .spec-item { border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .light-mode .distro-badge { background: #f1f1f4; border: 1px solid #e4e4e7; color: #18181b; }
+        .light-mode .qa-item, .light-mode section { border-color: #e4e4e7 !important; }
+        .light-mode .release-line { background: linear-gradient(to bottom, transparent, #e4e4e7 15%, #e4e4e7 85%, transparent); }
+        .light-mode .release-dot { border-color: #fdfdfd; }
+
         .nav-glass { background: rgba(5, 5, 7, 0.8); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.05); }
         .card-base { background: #0f0f12; border: 1px solid #1f1f23; border-radius: 24px; }
         .spec-item { display: flex; justify-content: space-between; padding: 0.85rem 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
@@ -43,15 +57,23 @@
                 <span class="font-extrabold text-2xl tracking-tighter">DuckLLM</span>
             </div>
             <div class="hidden md:flex gap-10 text-[11px] font-black uppercase tracking-[0.2em] text-zinc-500">
-                <a href="#about" class="hover:text-amber-500 transition">Features</a>
+                <a href="#about" class="hover:text-amber-500 transition">About</a>
                 <a href="#changelog" class="hover:text-amber-500 transition">Updates</a>
+                <a href="#tutorial" class="hover:text-amber-500 transition">Tutorial</a>
                 <a href="#distros" class="hover:text-amber-500 transition">Distros</a>
                 <a href="#requirements" class="hover:text-amber-500 transition">Specs</a>
                 <a href="#qa" class="hover:text-amber-500 transition">Q&A</a>
             </div>
-            <a href="https://github.com/EithanAsulin/DuckLLM/releases" class="bg-white text-black px-8 py-2.5 rounded-xl font-extrabold text-xs uppercase tracking-tighter hover:bg-amber-500 transition-all active:scale-95">
-                Download Now
-            </a>
+            
+            <div class="flex items-center gap-4">
+                <button id="theme-toggle" class="p-2.5 rounded-xl border border-zinc-800 hover:border-amber-500 transition-all text-xl bg-transparent">
+                    <span id="theme-icon">🌙</span>
+                </button>
+                
+                <a href="https://github.com/EithanAsulin/DuckLLM/releases" class="bg-white text-black px-8 py-2.5 rounded-xl font-extrabold text-xs uppercase tracking-tighter hover:bg-amber-500 transition-all active:scale-95">
+                    Download Now
+                </a>
+            </div>
         </div>
     </nav>
 
@@ -63,9 +85,10 @@
                     Experience AI <br><span class="text-zinc-500">Without the Bloat.</span>
                 </h1>
                 <p class="text-zinc-400 text-lg leading-relaxed max-w-xl">
-                    DuckLLM is a powerful, lightweight wrapper built to provide a seamless GUI for local language models. 
-                    By utilizing the <strong>phi3:mini</strong> engine through Ollama, it delivers a high-speed, 
-                    private AI experience designed specifically for standard desktop hardware.
+                    DuckLLM is a powerful, lightweight Model built to provide a seamless GUI for Your Desktop! <br><br>
+                    DuckLLM Is Based On the <strong>Qwen 2.5 Vision</strong> Model From Ollama Using a Custom ModelFile It Delivers Extra Features At High-Speeds Which Aren't Possible With Standard Models. <br><br>
+
+                    All While Running Entirely <strong>Locally</strong> On Your Machine With No Cloud Dependencies.
                 </p>
             </div>
             <div class="lg:col-span-2 card-base p-8 bg-gradient-to-br from-zinc-900 to-black border-amber-500/20">
@@ -74,14 +97,14 @@
                     <div class="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/5">
                         <span class="text-xl"></span>
                         <div>
-                            <p class="font-bold text-sm">Python 3.x</p>
+                            <p class="font-bold text-sm text-white">Python 3.x</p>
                             <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-tighter">Environment Required</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/5">
                         <span class="text-xl"></span>
                         <div>
-                            <p class="font-bold text-sm">Ollama</p>
+                            <p class="font-bold text-sm text-white">Ollama</p>
                             <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-tighter">Backend Required</p>
                         </div>
                     </div>
@@ -92,44 +115,77 @@
 
     <section id="changelog" class="anchor max-w-4xl mx-auto px-6 py-24 border-t border-zinc-900/50 reveal">
         <div class="mb-16">
-            <h2 class="text-4xl font-black uppercase tracking-tighter text-white">Latest Deployment</h2>
-            <p class="text-zinc-500 text-sm mt-2 italic">v1.5.0 Release Log</p>
+            <h2 class="text-4xl font-black uppercase tracking-tighter text-yellow-500">Happy New Years!</h2>
+            <h2 class="text-4xl font-black uppercase tracking-tighter text-white">Latest Release</h2>
+            <p class="text-zinc-500 text-sm mt-2 italic">v2.0.0 Release Log</p>
         </div>
         <div class="relative">
             <div class="release-line"></div>
             <div class="release-item reveal">
+                <h3 class="text-white font-bold text-xl tracking-tight">This Is The Biggest Update To DuckLLM Since The Initial Release!</h3>
+                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">3 New Features Added And MacOS Getting Official Support! (Beta)</p>
                 <div class="release-dot dot-added"></div>
                 <span class="log-tag bg-green-500/10 text-green-500 border border-green-500/20">Added</span>
-                <h3 class="text-white font-bold text-xl tracking-tight">Linux Support Added</h3>
-                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">Full UI support for Arch, Debian, and Ubuntu Wayland & X11 (Experimental) environments.</p>
+
+                <h3 class="text-white font-bold text-xl tracking-tight mt-4">Image Support (Experimental)</h3>
+                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">Now You Can Upload .png .jpeg .jpg Files For The AI To Answer On Screen Questions. (This Currently Is Very Experimental You Shouldn't Try Giving It Complex Stuff)</p>
                 
-                <h3 class="text-white font-bold text-xl tracking-tight">Updated Model File</h3>
-                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">Now With a More Elegant Model File DuckLLM Gets a Refurbished Feel Compared To DuckLLM V1.0.0</p>
+                <h3 class="text-white font-bold text-xl tracking-tight mt-4">Documents Support</h3>
+                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">Now With The New File Chooser You Can Upload Documents For Processing.</p>
+                
+                <h3 class="text-white font-bold text-xl tracking-tight mt-4">Updated Model File</h3>
+                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">The model file has been updated to use Qwen 2.5 Vision for improved performance and accuracy.</p>
+
+                <h3 class="text-white font-bold text-xl tracking-tight mt-4">Web Search</h3>
+                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">The Web Search Feature Has Returned!</p>
+
+                <h3 class="text-white font-bold text-xl tracking-tight mt-4">Dark/Light Mode For The Website</h3>
+                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">Added Toggle For Dark/Light Mode</p>
+
+                <h3 class="text-white font-bold text-xl tracking-tight mt-4">Setup & Usage Tutorial</h3>
+                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">Added a Tutorial Section </p>
+
+                <h3 class="text-white font-bold text-xl tracking-tight mt-4">MacOS Support</h3>
+                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">MacOS Support Is Now Officially Available! (Beta) [BEWARE MANUAL INSTALLATION STEPS MIGHT BE REQUIRED FOR M1-M5 Macs]</p>
             </div>
             <div class="release-item reveal">
                 <div class="release-dot dot-fixed"></div>
                 <span class="log-tag bg-blue-500/10 text-blue-500 border border-blue-500/20">Fixed</span>
-                <h3 class="text-white font-bold text-xl tracking-tight">Failing Installation</h3>
-                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">Fixed The Missing Python Libraries Error.</p>
-                <h3 class="text-white font-bold text-xl tracking-tight">Fixed Input Box</h3>
-                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">On Some Occasions When Switching Windows The Input Box Was Not Working Properly.</p>
+                <h3 class="text-white font-bold text-xl tracking-tight">Ghost Window</h3>
+                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">Now After Expanding The + Icon You Have An X To Close The Ghost Window (Linux)</p>
             </div>
             <div class="release-item reveal">
                 <div class="release-dot dot-removed"></div>
                 <span class="log-tag bg-red-500/10 text-red-500 border border-red-500/20">Removed</span>
-                <h3 class="text-white font-bold text-xl tracking-tight">Web Search (Temporary)</h3>
-                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">While Making The Linux Support THe Web Search Option Has Caused Crashes Due To Not Having a Default Browser</p>
+                <h3 class="text-white font-bold text-xl tracking-tight">None!</h3>
             </div>
+        </div>
+    </section>
+
+    <section id="tutorial" class="anchor max-w-5xl mx-auto px-6 py-24 border-t border-zinc-900/50 reveal">
+        <div class="mb-12">
+            <h2 class="text-4xl font-black uppercase tracking-tighter text-white">Tutorial</h2>
+            <p class="text-zinc-500 text-sm mt-2">Learn how to set up and use DuckLLM on your machine.</p>
+        </div>
+        <div class="card-base overflow-hidden border-amber-500/10">
+            <video class="w-full aspect-video" controls>
+                <source src="Tutorial.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
         </div>
     </section>
 
     <section id="distros" class="anchor max-w-6xl mx-auto px-6 py-12 border-t border-zinc-900/50 reveal">
         <div class="mb-8"><h2 class="text-2xl font-black uppercase tracking-tighter mb-2 text-white">Supported Distributions</h2></div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="distro-badge"><span></span> Windows 11 / 10</div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div class="distro-badge"><span></span> Windows 11</div>
+            <div class="distro-badge"><span></span> Windows 10</div>
             <div class="distro-badge"><span></span> Ubuntu LTS</div>
             <div class="distro-badge"><span></span> Debian</div>
+            <div class="distro-badge"><span></span> Linux Mint (Ubuntu)</div>
             <div class="distro-badge"><span></span> Arch Linux</div>
+            <div class="distro-badge"><span></span> Manjaro (Arch)</div>
+            <div class="distro-badge"><span></span> MacOS (Beta)</div>
         </div>
     </section>
 
@@ -181,6 +237,40 @@
                     </div>
                 </div>
             </div>
+            <div class="card-base overflow-hidden">
+                <div class="os-header flex justify-between items-center text-white italic font-extrabold">MacOS<span class="text-[10px] font-black text-orange-400 bg-orange-400/10 px-3 py-1 rounded-md not-italic">X86 & ARM (Beta)</span></div>
+                <div class="p-8 space-y-10">
+                    <div>
+                        <h4 class="text-amber-500 font-black text-[10px] tracking-[0.2em] uppercase mb-4">Minimum Configuration</h4>
+                        <div class="text-sm space-y-1">
+                            <div class="spec-item"><span class="text-zinc-500">PC</span> <span class="text-white font-medium">Macbook Pro 2015</span></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-green-500 font-black text-[10px] tracking-[0.2em] uppercase mb-4">Recommended Build</h4>
+                        <div class="text-sm space-y-1">
+                            <div class="spec-item"><span class="text-zinc-500">PC</span> <span class="text-white font-medium">Macbook M1/Mac Mini M1</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-base overflow-hidden">
+                <div class="os-header flex justify-between items-center text-white italic font-extrabold">DuckLLM Visual Engine (GPU) [Experimental]<span class="text-[10px] font-black text-orange-400 bg-orange-400/10 px-3 py-1 rounded-md not-italic">This Is Calculated Without CPU & RAM Bottleneck</span></div>
+                <div class="p-8 space-y-10">
+                    <div>
+                        <h4 class="text-amber-500 font-black text-[10px] tracking-[0.2em] uppercase mb-4">Minimum Configuration</h4>
+                        <div class="text-sm space-y-1">
+                            <div class="spec-item"><span class="text-zinc-500">GPU</span> <span class="text-white font-medium">AMD Radeon 5700 XT / Nvidia RTX 3070 / Intel ARC A770</span></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-green-500 font-black text-[10px] tracking-[0.2em] uppercase mb-4">Recommended Build</h4>
+                        <div class="text-sm space-y-1">
+                            <div class="spec-item"><span class="text-zinc-500">GPU</span> <span class="text-white font-medium">AMD Radeon 7800 XT / Nvidia RTX 4070 Ti Super</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -189,12 +279,11 @@
             <h4 class="text-red-500 font-bold mb-4 uppercase tracking-widest">Known Issues</h4>
             <div class="space-y-4 text-zinc-400 italic border-l-2 border-red-500/20 pl-3">
                 <p>Installer getting stuck? This is a known upstream Ollama issue. Restart the service and verify your connection.</p>
-                <p>On Gnome Distros (Ubuntu Mostly) When clicking the Super Key the window might get stuck due to it being a Borderless-Window.</p>
             </div>
         </div>
         <div class="card-base p-8 text-sm">
-            <h4 class="text-white font-bold mb-4 uppercase tracking-widest">Unavailable Features</h4>
-            <p class="text-zinc-400 leading-relaxed">Vision models and image processing are currently disabled. These models remain too heavy and unstable for consumer-grade hardware.</p>
+            <h4 class="text-white font-bold mb-4 uppercase tracking-widest">Experimental Features</h4>
+            <p class="text-zinc-400 leading-relaxed">Vision models and image processing are currently still Experimental And You Shouldn't Expect Good Results With Them.</p>
         </div>
         <div class="card-base p-8 border-amber-500/20 flex flex-col justify-between">
             <h4 class="text-white font-bold mb-4 uppercase text-sm tracking-widest">Contact & Support</h4>
@@ -215,7 +304,7 @@
                 <p class="text-zinc-400 text-sm leading-relaxed">A: For Multiple Operating Systems, DuckLLM Requires a Cross-Platform Compatible GUI Engine.</p>
             </div>
             <div class="qa-item">
-                <h3 class="text-white font-bold text-lg mb-2">Q: Can I use other models besides Phi-3 Mini?</h3>
+                <h3 class="text-white font-bold text-lg mb-2">Q: Can I use other models besides Qwen 2.5 Vision?</h3>
                 <p class="text-zinc-400 text-sm leading-relaxed">A: Yes, By Editing The Model File Before Installing You Can Use a Different Ollama Model. Do Beaware You Might Experience Issues.</p>
             </div>
             <div class="qa-item">
@@ -225,6 +314,14 @@
             <div class="qa-item">
                 <h3 class="text-white font-bold text-lg mb-2">Q: How do I update to the latest version?</h3>
                 <p class="text-zinc-400 text-sm leading-relaxed">A: Simply check the "Releases" section on GitHub. You can download the latest installer and run it over your existing installation.</p>
+            </div>
+            <div class="qa-item">
+                <h3 class="text-white font-bold text-lg mb-2">Q: Wouldn't Using a Vision Model Cause Performance Issues Compared To Other Models?</h3>
+                <p class="text-zinc-400 text-sm leading-relaxed">A: No, Only Once an Image Is Selected It Will Use DuckLLM's Vision Engine (Dual Mode).</p>
+            </div>
+            <div class="qa-item">
+                <h3 class="text-white font-bold text-lg mb-2">Q: Why Does The Model File Include The Country It Was Developed In? (Israel)</h3>
+                <p class="text-zinc-400 text-sm leading-relaxed">A: This Is Just a Placeholder Since If Not Added The Entire Model Identity Might Be Lost Or It Might Keep Mentioning Other Unrelated Countries. (Could Be Expected To Remove In V2.5.0)</p>
             </div>
         </div>
     </section>
@@ -240,6 +337,24 @@
             });
         }, { threshold: 0.1 });
         document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        // THEME TOGGLE LOGIC
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const body = document.body;
+
+        // Load saved preference
+        if (localStorage.getItem('theme') === 'light') {
+            body.classList.add('light-mode');
+            themeIcon.textContent = '☀️';
+        }
+
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('light-mode');
+            const isLight = body.classList.contains('light-mode');
+            themeIcon.textContent = isLight ? '☀️' : '🌙';
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        });
     </script>
 </body>
 </html>
