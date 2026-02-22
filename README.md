@@ -5,4 +5,4 @@ https://eithanasulin.github.io/DuckLLM/
 OPEN-GPLv3 License (Open Source)
 
 # DOWNLOAD
-V3.0.0 STABLE Out In Releases
+V3.5.0 STABLE Out In Releases
