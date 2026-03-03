@@ -1,4 +1,4 @@
-# OFFICIAL SITE (INFO)
+# Official Homepage
 https://eithanasulin.github.io/DuckLLM/
 
 # What's DuckLLM?
