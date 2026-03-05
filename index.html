@@ -81,7 +81,7 @@
             <div class="hidden md:flex gap-10 text-[11px] font-black uppercase tracking-[0.2em] text-zinc-500">
                 <a href="#about" class="hover:text-amber-500 transition">About</a>
                 <a href="#changelog" class="hover:text-amber-500 transition">Updates</a>
-                <a href="#tutorial" class="hover:text-amber-500 transition">Tutorial</a>
+                <a href="#screenshots" class="hover:text-amber-500 transition">Screenshots</a>
                 <a href="#distros" class="hover:text-amber-500 transition">Distros</a>
                 <a href="#requirements" class="hover:text-amber-500 transition">Specs</a>
                 <a href="#qa" class="hover:text-amber-500 transition">Q&A</a>
@@ -241,18 +241,84 @@
         </div>
     </section>
 
-    <section id="tutorial" class="anchor max-w-5xl mx-auto px-6 py-24 border-t border-zinc-900/50 reveal">
+    <section id="screenshots" class="anchor max-w-5xl mx-auto px-6 py-24 border-t border-zinc-900/50 reveal">
         <div class="mb-12">
-            <h2 class="text-4xl font-black uppercase tracking-tighter text-white">Tutorial</h2>
-            <p class="text-zinc-500 text-sm mt-2">Learn how to set up and use DuckLLM on your machine.</p>
+            <h2 class="text-4xl font-black uppercase tracking-tighter text-white">Screenshots</h2>
+            <p class="text-zinc-500 text-sm mt-2">A look at DuckLLM in action.</p>
         </div>
-        <div class="card-base overflow-hidden border-amber-500/10">
-            <video class="w-full aspect-video" controls>
-                <source src="Tutorial.mp4" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
+        <div class="relative">
+            <div class="card-base overflow-hidden border-zinc-800">
+                <div class="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
+                    <span id="carousel-title" class="text-white font-bold tracking-tight text-sm">DuckLLM Desktop (Small)</span>
+                    <span id="carousel-counter" class="text-zinc-500 text-xs font-black">1 / 6</span>
+                </div>
+                <img id="carousel-img" src="examples/1.png" alt="Screenshot" class="w-full object-contain max-h-[520px] transition-opacity duration-300" />
+                <video id="carousel-video" src="examples/Tutorial.mp4" controls class="w-full max-h-[520px] hidden"></video>
+            </div>
+            <!-- Arrows -->
+            <button onclick="changeSlide(-1)" class="absolute left-3 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-amber-500 text-white rounded-full w-10 h-10 flex items-center justify-center text-lg font-black transition-all border border-zinc-700 hover:border-amber-500">‹</button>
+            <button onclick="changeSlide(1)" class="absolute right-3 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-amber-500 text-white rounded-full w-10 h-10 flex items-center justify-center text-lg font-black transition-all border border-zinc-700 hover:border-amber-500">›</button>
+            <!-- Dots -->
+            <div class="flex justify-center gap-2 mt-5" id="carousel-dots"></div>
         </div>
     </section>
+    <script>
+        const totalSlides = 7;
+        let currentSlide = 0;
+        const img = document.getElementById('carousel-img');
+        const video = document.getElementById('carousel-video');
+        const dotsContainer = document.getElementById('carousel-dots');
+        const titleEl = document.getElementById('carousel-title');
+        const counterEl = document.getElementById('carousel-counter');
+        const titles = [
+            'DuckLLM Desktop (Small)',
+            'DuckLLM Desktop (Full Screen)',
+            'DuckLLM Mobile',
+            'DuckLLM Mobile (Side Panel)',
+            'DuckLLM Mobile (Duck Memos)',
+            'DuckLLM Mobile (Settings)',
+            'Tutorial'
+        ];
+
+ 
+        for (let i = 0; i < totalSlides; i++) {
+            const dot = document.createElement('button');
+            dot.className = 'w-2 h-2 rounded-full transition-all ' + (i === 0 ? 'bg-amber-500 w-4' : 'bg-zinc-600');
+            dot.onclick = () => goToSlide(i);
+            dotsContainer.appendChild(dot);
+        }
+
+        function updateDots() {
+            [...dotsContainer.children].forEach((d, i) => {
+                d.className = 'w-2 h-2 rounded-full transition-all ' + (i === currentSlide ? 'bg-amber-500 w-4' : 'bg-zinc-600');
+            });
+        }
+
+        function goToSlide(n) {
+            currentSlide = n;
+            const isVideo = currentSlide === totalSlides - 1;
+            img.style.opacity = '0';
+            video.pause();
+            setTimeout(() => {
+                if (isVideo) {
+                    img.classList.add('hidden');
+                    video.classList.remove('hidden');
+                } else {
+                    video.classList.add('hidden');
+                    img.classList.remove('hidden');
+                    img.src = `examples/${currentSlide + 1}.png`;
+                    img.style.opacity = '1';
+                }
+            }, 150);
+            titleEl.textContent = titles[currentSlide];
+            counterEl.textContent = `${currentSlide + 1} / ${totalSlides}`;
+            updateDots();
+        }
+
+        function changeSlide(dir) {
+            goToSlide((currentSlide + dir + totalSlides) % totalSlides);
+        }
+    </script>
 
     <section id="distros" class="anchor max-w-6xl mx-auto px-6 py-12 border-t border-zinc-900/50 reveal">
         <div class="mb-8"><h2 class="text-2xl font-black uppercase tracking-tighter mb-2 text-white">Supported Distributions</h2></div>
@@ -424,12 +490,12 @@
         }, { threshold: 0.1 });
         document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-        // THEME TOGGLE LOGIC
+
         const themeToggle = document.getElementById('theme-toggle');
         const themeIcon = document.getElementById('theme-icon');
         const body = document.body;
 
-        // Load saved preference
+
         if (localStorage.getItem('theme') === 'light') {
             body.classList.add('light-mode');
             themeIcon.textContent = '☀️';
