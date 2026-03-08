@@ -29,10 +29,14 @@ To Install DuckLLM its Very Simple!
 
 # How To a Shortcut To DuckLLM
 
-In Linux You Can Add a Shortcut Via The Keyboard Section In Settings
+In Linux You Can Add a Shortcut Via The Keyboard Section In Settings 
 
 In Windows You Can Use Windows Powertoys To Create a Shortcut
 
 > Linux : python DuckLLM/DuckLLM.py
 
-> Windows python ~/Desktop/DuckLLM/DuckLLM.py 
+> Windows python ~/Desktop/DuckLLM/DuckLLM.py
+
+# Source Code (Open Source)
+DuckLLM's Source Code Can Be Found In The **/src** Folder In This GitHub Repository Or In The **Releases**.
+
