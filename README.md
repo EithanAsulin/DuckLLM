@@ -1,22 +1,38 @@
 # Official Homepage
 https://eithanasulin.github.io/DuckLLM/
 
+# Supported Systems
+- Windows
+- Linux
+- Android
+
 # What's DuckLLM?
 DuckLLM is a Free Open Source Local LLM (AI) Which Excels In Privacy And Security While Maintaining Impressive Perfomance.
 
 # Why DuckLLM?
-DuckLLM Offers a Free Solution To Modern AI, Modern AI Is Pricey... But DuckLLM Is Free And Local Theres No Internet Connection Needed And No Price To Be Paid
+DuckLLM Offers a Modern Solution To Cloud Models (Like ChatGPT & Gemini), DuckLLM Makes It Easy To Locally Host a Model On Device For Both Desktop & Mobile With a Privacy Focused Design While Maintaining Functionality.
 
 # How Is DuckLLM Private & Secure?
-DuckLLM Utilizes Local AI To Ensure No Data Is Leaving The Computer, Other Than That DuckLLM Requires 0 Permissions Meaning It Cannot Access Or Modify Your Files And Etc, Other Than That The Onlt Way To Give It Web access Is Via a Button Meaning If Not Toggled On Theres No Access To Data!
+DuckLLM Utilizes Local AI To Ensure No Data Is Leaving The Computer, Other Than That DuckLLM Requires 0 Permissions Meaning It Cannot Access Or Modify Your Files And Etc, Other Than That The Only For It To Have Web Access Is Via a Button Meaning If Not Toggled On Theres No Access To Data!
 
-# How Do i Download?
+# How Do i Download? (Desktop)
 To Install DuckLLM its Very Simple!
-First Get The Latest Release Of DuckLLM From The Releases (DuckLLM.zip)
+- Install The Latest DuckLLM.zip From The Releases
 
-Second Extract The Zip File And Run 'installer.py' After That Enter Your Operating System Of Choice And Thats It!
-(Also Add a Shortcut To Run 'python DuckLLM/DuckLLM.py')
+- Unzip DuckLLM.zip
 
+- Run installer.py With Python (3.12 Or Older)
 
+- Type Anything (i Do Recommend Reading README.txt Before Though
 
+- Select Your Operating System (Windows, Ubuntu, Debian, Arch Linux Or Other Aka Other Linux Distros)
 
+# How To a Shortcut To DuckLLM
+
+In Linux You Can Add a Shortcut Via The Keyboard Section In Settings
+
+In Windows You Can Use Windows Powertoys To Create a Shortcut
+
+> Linux : python DuckLLM/DuckLLM.py
+
+> Windows python ~/Desktop/DuckLLM/DuckLLM.py 
