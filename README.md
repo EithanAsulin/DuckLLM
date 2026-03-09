@@ -15,8 +15,9 @@ DuckLLM Offers a Modern Solution To Cloud Models (Like ChatGPT & Gemini), DuckLL
 # How Is DuckLLM Private & Secure?
 DuckLLM Utilizes Local AI To Ensure No Data Is Leaving The Computer, Other Than That DuckLLM Requires 0 Permissions Meaning It Cannot Access Or Modify Your Files And Etc, Other Than That The Only For It To Have Web Access Is Via a Button Meaning If Not Toggled On Theres No Access To Data!
 
-# How Do i Download? (Desktop)
-To Install DuckLLM its Very Simple!
+# How Do i Download? 
+- Desktop
+> To Install DuckLLM Desktop its Very Simple!
 - Install The Latest DuckLLM.zip From The Releases
 
 - Unzip DuckLLM.zip
@@ -26,6 +27,20 @@ To Install DuckLLM its Very Simple!
 - Type Anything (i Do Recommend Reading README.txt Before Though
 
 - Select Your Operating System (Windows, Ubuntu, Debian, Arch Linux Or Other Aka Other Linux Distros)
+
+- DuckLLM Mobile
+> This Installation Only Covers Wllama 
+
+- Download DuckLLM Mobile From The Google Play Store
+- Enter The App And Enter Your Username (Or Skip) And Select Download Center
+- Download One Of These 3 Models
+> DuckLLM Lite (0.5b)
+
+> DuckLLM Base (1.5b)
+
+> DuckLLM Pro (3b)
+
+I Recommend Base Or Light For Average Use!
 
 # How To a Shortcut To DuckLLM
 
