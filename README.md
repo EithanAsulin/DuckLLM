@@ -1,5 +1,5 @@
-[![DuckLLM License](https://img.shields.io/badge/license-DuckLLM%20Proprietary-blue)](LICENSE.txt)
-[![Base Model](https://img.shields.io/badge/base-Qwen2.5%20Apache%202.0-green)](LICENSE-APACHE.txt)
+[![DuckLLM License](https://img.shields.io/badge/license-DuckLLM%20Proprietary-blue)](DuckLLM.license)
+[![Base Model](https://img.shields.io/badge/base-Qwen2.5%20Apache%202.0-green)](Apache-2.0.license)
 
 # Official Homepage
 https://eithanasulin.github.io/DuckLLM/
