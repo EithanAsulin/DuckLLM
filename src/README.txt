@@ -13,3 +13,5 @@ Windows : "python ~/Desktop/DuckLLM/DuckLLM.py"
 If You Don't Add This You Will Need To Trigger It Manually
 
 Click Del To Show And [CHOOSEN KEY] To Hide.
+
+
