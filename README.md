@@ -10,7 +10,7 @@ https://eithanasulin.github.io/DuckLLM/
 - Android
 
 # What's DuckLLM?
-DuckLLM is a Free Open Source Local LLM (AI) Which Excels In Privacy And Security While Maintaining Impressive Perfomance.
+DuckLLM is a Free Local LLM (AI) Which Excels In Privacy And Security While Maintaining Impressive Perfomance.
 
 # Why DuckLLM?
 DuckLLM Offers a Modern Solution To Cloud Models (Like ChatGPT & Gemini), DuckLLM Makes It Easy To Locally Host a Model On Device For Both Desktop & Mobile With a Privacy Focused Design While Maintaining Functionality.
@@ -37,7 +37,7 @@ DuckLLM Utilizes Local AI To Ensure No Data Is Leaving The Computer, Other Than 
 - Download DuckLLM Mobile From The Google Play Store
 - Enter The App And Enter Your Username (Or Skip) And Select Download Center
 - Download One Of These 3 Models
-> DuckLLM Lite (0.5b)
+> DuckLLM Light (0.5b)
 
 > DuckLLM Base (1.5b)
 
