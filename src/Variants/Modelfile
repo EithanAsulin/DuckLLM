@@ -1,1 +1,1 @@
-FROM DuckLLM/DuckLLM-1.0:7.6b
+FROM DuckLLM/DuckLLM-1.0:7.5B

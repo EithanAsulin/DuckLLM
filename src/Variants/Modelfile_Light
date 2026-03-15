@@ -1,0 +1,1 @@
+FROM DuckLLM/DuckLLM-1.0:3.1B
