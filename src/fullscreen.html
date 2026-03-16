@@ -1,736 +1,745 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DuckLLM</title>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DuckLLM</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-:root {
-  --bg:       #0c0c0e;
-  --pill:     #1a1a1f;
-  --border:   rgba(255,255,255,0.1);
-  --blue:     #0040FF;
-  --green:    #00FF88;
-  --yellow:   #FFCC00;
-  --red:      #FF4444;
-  --cyan:     #00CCFF;
-  --text:     #e0e0e0;
-  --dim:      #555;
-  --user-bg:  rgba(255,255,255,0.08);
-  --user-bdr: rgba(255,255,255,0.15);
-  --ai-bg:    rgba(255,255,255,0.05);
-  --ai-bdr:   rgba(255,255,255,0.1);
-}
+    :root {
+      --bg: #08080a;
+      --pill: rgba(255, 255, 255, 0.05);
+      --border: rgba(255, 255, 255, 0.08);
+      --blue: #0066FF;
+      --green: #00FF88;
+      --yellow: #FFD700;
+      --red: #FF4B4B;
+      --cyan: #00E5FF;
+      --text: #F0F0F0;
+      --dim: #888;
+      --user-bg: rgba(0, 102, 255, 0.1);
+      --user-bdr: rgba(0, 102, 255, 0.3);
+      --ai-bg: rgba(255, 255, 255, 0.03);
+      --ai-bdr: rgba(255, 255, 255, 0.08);
+      --glass: blur(12px) saturate(180%);
+    }
 
-html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; }
+    html,
+    body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow: hidden;
+    }
 
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(0, 102, 255, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(0, 255, 136, 0.1) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0) 0%, rgba(8, 8, 10, 0.5) 100%);
+      pointer-events: none;
+      z-index: 0;
+      animation: bgFlow 20s ease-in-out infinite alternate;
+    }
 
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 90% 55% at 50% 110%, rgba(0, 85, 210, 0.28) 0%, transparent 65%),
-    radial-gradient(ellipse 60% 40% at 15% 110%, rgba(0, 60, 180, 0.18) 0%, transparent 55%),
-    radial-gradient(ellipse 60% 40% at 85% 110%, rgba(0, 60, 180, 0.18) 0%, transparent 55%);
-  pointer-events: none;
-  z-index: 0;
-}
+    @keyframes bgFlow {
+      from {
+        transform: scale(1);
+      }
 
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 18%, transparent 75%, rgba(0,0,0,0.25) 100%);
-  pointer-events: none;
-  z-index: 0;
-}
+      to {
+        transform: scale(1.1);
+      }
+    }
 
-#app {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  width: 100%;
-  max-width: 100%;
-  margin: 0 auto;
-  padding: 0 8vw;
-}
+    #app {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 4vw;
+    }
 
-header {
-  display: flex;
-  align-items: center;
-  padding: 18px 0 14px;
-  gap: 12px;
-  flex-shrink: 0;
-}
+    header {
+      display: flex;
+      align-items: center;
+      padding: 24px 0;
+      gap: 16px;
+      flex-shrink: 0;
+    }
 
-.logo-pill {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--pill);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 6px 14px 6px 8px;
-}
+    .logo-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--pill);
+      backdrop-filter: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 8px 18px 8px 12px;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
 
-.dot {
-  width: 10px; height: 10px;
-  border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 8px var(--green);
-  transition: background .3s, box-shadow .3s;
-  flex-shrink: 0;
-}
+    .logo-pill:hover {
+      transform: scale(1.02);
+    }
 
-.logo-text {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 4px;
-  color: #777;
-  text-transform: uppercase;
-}
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 15px var(--green);
+    }
 
-.header-right {
-  margin-left: auto;
-  display: flex;
-  gap: 6px;
-}
+    .logo-text {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 5px;
+      color: #fff;
+      text-transform: uppercase;
+      opacity: 0.9;
+    }
 
-.pill-btn {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 2px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--pill);
-  color: var(--dim);
-  cursor: pointer;
-  transition: all 0.2s;
-  text-transform: uppercase;
-}
-.pill-btn:hover { color: #666; border-color: rgba(255,255,255,0.1); }
-.pill-btn.on-web  { border-color: var(--blue); color: var(--blue); background: rgba(0,64,255,0.08); box-shadow: 0 0 12px rgba(0,64,255,0.15); }
-.pill-btn.on-unfi { border-color: var(--red);  color: var(--red);  background: rgba(255,68,68,0.08); box-shadow: 0 0 12px rgba(255,68,68,0.12); }
+    .pill-btn {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      padding: 8px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--pill);
+      backdrop-filter: var(--glass);
+      color: var(--dim);
+      cursor: pointer;
+      transition: all 0.25s ease;
+      text-transform: uppercase;
+    }
 
-#chat {
-  flex: 1;
-  overflow-y: auto;
-  padding: 10px 0 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  scrollbar-width: thin;
-  scrollbar-color: #1a1a1a transparent;
-}
-#chat::-webkit-scrollbar { width: 3px; }
-#chat::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 99px; }
+    .pill-btn:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.1);
+    }
 
-#empty {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  user-select: none;
-  pointer-events: none;
-  padding-bottom: 60px;
-}
-.empty-logo {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 64px;
-  font-weight: 800;
-  letter-spacing: 6px;
-  color: #252525;
-  text-shadow: 0 0 80px rgba(0, 60, 255, 0.2);
-}
-.empty-sub {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 10px;
-  letter-spacing: 4px;
-  color: #2a2a2a;
-  text-transform: uppercase;
-}
+    #chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      mask-image: linear-gradient(to bottom, transparent, black 5%, black 95%, transparent);
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+    }
 
-.msg-row {
-  display: flex;
-  animation: popIn 0.18s ease-out;
-}
-@keyframes popIn {
-  from { opacity:0; transform: translateY(8px); }
-  to   { opacity:1; transform: translateY(0);   }
-}
+    #chat::-webkit-scrollbar {
+      width: 6px;
+    }
 
-.msg-row.user      { justify-content: flex-end; }
-.msg-row.assistant { justify-content: flex-start; }
+    #chat::-webkit-scrollbar-track {
+      background: transparent;
+    }
 
-.bubble {
-  max-width: 55%;
-  border-radius: 22px;
-  padding: 14px 20px;
-  font-size: 16px;
-  line-height: 1.7;
-}
+    #chat::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 99px;
+      border: 1px solid rgba(255, 255, 255, 0.02);
+    }
 
-.msg-row.user .bubble {
-  background: var(--user-bg);
-  border: 1px solid var(--user-bdr);
-  border-bottom-right-radius: 6px;
-  color: #d0d0d0;
-}
+    #chat::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
 
-.msg-row.assistant .bubble {
-  background: var(--ai-bg);
-  border: 1px solid var(--ai-bdr);
-  border-bottom-left-radius: 6px;
-  color: var(--text);
-}
+    .msg-row {
+      display: flex;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: msgAppear 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    }
 
-.bubble code {
-  font-family: 'Courier New', monospace;
-  font-size: 13px;
-  background: rgba(0,0,0,0.4);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 6px;
-  padding: 1px 6px;
-  color: #e0e0e0;
-}
+    @keyframes msgAppear {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
-.code-wrap {
-  background: #131318;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 16px;
-  overflow: hidden;
-  margin: 8px 0;
-  width: 100%;
-}
-.code-top {
-  display: flex;
-  align-items: center;
-  background: #1a1a20;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  padding: 7px 14px;
-  gap: 8px;
-}
-.code-lang {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 9px;
-  letter-spacing: 2px;
-  color: #555;
-  text-transform: uppercase;
-}
-.code-copy-btn {
-  margin-left: auto;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 9px;
-  letter-spacing: 1px;
-  padding: 3px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: transparent;
-  color: #666;
-  cursor: pointer;
-  transition: all .15s;
-}
-.code-copy-btn:hover { color: #ccc; border-color: rgba(255,255,255,0.2); }
+    .bubble {
+      max-width: 70%;
+      border-radius: 24px;
+      padding: 16px 24px;
+      font-size: 16px;
+      line-height: 1.8;
+      white-space: pre-wrap;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
 
-.code-pre {
-  font-family: 'Courier New', monospace;
-  font-size: 13px;
-  color: #e0e0e0;
-  padding: 14px 16px;
-  overflow-x: auto;
-  max-height: 340px;
-  overflow-y: auto;
-  white-space: pre;
-  line-height: 1.65;
-  scrollbar-width: thin;
-  scrollbar-color: #1e1e1e transparent;
-}
+    .msg-row.user .bubble {
+      background: linear-gradient(135deg, #1e293b, #020817);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+      margin-left: auto;
+      margin-right: 20px;
+    }
 
-#thinking {
-  display: none;
-  align-items: center;
-  gap: 10px;
-  padding: 4px 0;
-}
-#thinking.on { display: flex; }
+    .msg-row.assistant .bubble {
+      background: var(--ai-bg);
+      backdrop-filter: var(--glass);
+      border: 1px solid var(--ai-bdr);
+      color: var(--text);
+      border-bottom-left-radius: 4px;
+    }
 
-.think-bubble {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--ai-bg);
-  border: 1px solid var(--ai-bdr);
-  border-radius: 22px;
-  border-bottom-left-radius: 6px;
-  padding: 10px 16px;
-}
+    .code-wrap {
+      background: #0d0d0f;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      overflow: hidden;
+      margin: 12px 0;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
 
-.tdots span {
-  display: inline-block;
-  width: 5px; height: 5px;
-  border-radius: 50%;
-  background: #555;
-  margin: 0 2px;
-  animation: tdot 1.3s ease-in-out infinite;
-}
-.tdots span:nth-child(2) { animation-delay:.2s }
-.tdots span:nth-child(3) { animation-delay:.4s }
-@keyframes tdot {
-  0%,80%,100% { transform:translateY(0); opacity:.3 }
-  40%         { transform:translateY(-5px); opacity:1 }
-}
+    .code-top {
+      display: flex;
+      align-items: center;
+      background: #141418;
+      padding: 10px 18px;
+    }
 
-.think-lbl {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 9px;
-  letter-spacing: 3px;
-  color: #555;
-  text-transform: uppercase;
-}
+    .code-pre {
+      padding: 20px;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 14px;
+    }
 
-.cursor {
-  display: inline-block;
-  width: 2px; height: 1em;
-  background: var(--cyan);
-  margin-left: 2px;
-  vertical-align: text-bottom;
-  border-radius: 1px;
-  animation: cur .75s step-end infinite;
-}
-@keyframes cur { 50% { opacity:0 } }
+    #thinking {
+      padding: 10px 0;
+      opacity: 0.8;
+    }
 
-#attach-chip {
-  display: none;
-  align-items: center;
-  gap: 8px;
-  background: rgba(0,255,136,0.08);
-  border: 1px solid rgba(0,255,136,0.25);
-  border-radius: 999px;
-  padding: 5px 12px 5px 10px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 11px;
-  color: var(--green);
-  width: fit-content;
-  margin: 0 auto 8px;
-}
-#attach-chip.visible { display: flex; }
-#attach-chip-name { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#attach-chip-x {
-  cursor: pointer;
-  opacity: 0.6;
-  font-size: 13px;
-  line-height: 1;
-  transition: opacity .15s;
-  flex-shrink: 0;
-}
-#attach-chip-x:hover { opacity: 1; }
+    .think-bubble {
+      background: var(--ai-bg);
+      backdrop-filter: var(--glass);
+      border: 1px solid var(--ai-bdr);
+      border-radius: 20px;
+      padding: 12px 20px;
+    }
 
-#input-area {
-  flex-shrink: 0;
-  padding: 10px 0 40px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 10px;
-}
+    #input-area {
+      flex-shrink: 0;
+      padding: 20px 0 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
 
-#input-pill {
-  width: 480px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: flex-end;
-  background: #161620;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 999px;
-  padding: 10px 10px 10px 22px;
-  transition: border-color .2s;
-}
-#input-pill:focus-within { border-color: rgba(255,255,255,0.2); }
+    #input-pill {
+      width: 100%;
+      max-width: 700px;
+      background: rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 28px;
+      padding: 8px 12px 8px 24px;
+      display: flex;
+      align-items: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
 
-#input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 15px;
-  color: #e0e0e0;
-  resize: none;
-  min-height: 32px;
-  max-height: 140px;
-  overflow-y: auto;
-  scrollbar-width: none;
-  line-height: 1.55;
-  padding: 4px 0;
-  align-self: center;
-}
-#input::-webkit-scrollbar { display: none; }
-#input::placeholder { color: #444; }
+    #input-pill:focus-within {
+      border-color: rgba(0, 102, 255, 0.5);
+      background: rgba(255, 255, 255, 0.07);
+      box-shadow: 0 10px 50px rgba(0, 102, 255, 0.2);
+    }
 
-#plus-wrap {
-  position: relative;
-  flex-shrink: 0;
-  display: flex;
-  align-items: flex-end;
-}
+    #input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 16px;
+      color: #fff;
+      resize: none;
+      min-height: 24px;
+      max-height: 140px;
+      line-height: 1.6;
+      padding: 8px 0;
+      caret-color: var(--blue);
+    }
 
-#plus-btn {
-  width: 54px; height: 54px;
-  border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: #161620;
-  color: #666;
-  font-size: 26px;
-  font-weight: 300;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: all .2s;
-  display: flex; align-items: center; justify-content: center;
-  line-height: 1;
-}
-#plus-btn:hover { background: #1e1e2a; color: #aaa; border-color: rgba(255,255,255,0.2); }
-#plus-btn.open { transform: rotate(45deg); color: #ccc; border-color: rgba(255,255,255,0.25); }
+    #input::placeholder {
+      color: #555;
+    }
 
-#plus-menu {
-  position: absolute;
-  bottom: 62px;
-  left: 50%;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  align-items: center;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity .18s ease, transform .18s ease;
-  transform: translateX(-50%) translateY(8px);
-}
-#plus-menu.open {
-  opacity: 1;
-  pointer-events: all;
-  transform: translateX(-50%) translateY(0);
-}
+    #plus-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
 
-.menu-btn {
-  white-space: nowrap;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 1.5px;
-  padding: 7px 16px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: #161620;
-  color: #777;
-  cursor: pointer;
-  transition: all .15s;
-  text-transform: uppercase;
-}
-.menu-btn:hover { color: #ccc; border-color: rgba(255,255,255,0.2); background: #1e1e2a; }
-.menu-btn.on-web  { border-color: rgba(0,85,210,0.6); color: #5588ff; background: rgba(0,64,200,0.12); }
-.menu-btn.on-unfi { border-color: rgba(255,68,68,0.5); color: #ff7070; background: rgba(255,68,68,0.1); }
-</style>
+    #plus-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: none;
+      background: var(--blue);
+      color: #fff;
+      font-size: 28px;
+      font-weight: 300;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 20px rgba(0, 102, 255, 0.3);
+      z-index: 10;
+    }
+
+    #plus-btn:hover {
+      transform: scale(1.08) rotate(5deg);
+      background: #005ae6;
+      box-shadow: 0 10px 25px rgba(0, 102, 255, 0.4);
+    }
+
+    #plus-btn.open {
+      transform: rotate(45deg);
+      background: #25252a;
+      color: #fff;
+    }
+
+    #plus-menu {
+      position: absolute;
+      bottom: 70px;
+      left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    #plus-menu.open {
+      opacity: 1;
+      pointer-events: all;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .menu-btn {
+      white-space: nowrap;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      padding: 10px 20px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(20, 20, 25, 0.8);
+      backdrop-filter: blur(10px);
+      color: #888;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+
+    .menu-btn:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .menu-btn.on-web {
+      color: var(--blue);
+      border-color: rgba(0, 102, 255, 0.4);
+      background: rgba(0, 102, 255, 0.1);
+    }
+
+    .menu-btn.on-unfi {
+      color: var(--red);
+      border-color: rgba(255, 75, 75, 0.4);
+      background: rgba(255, 75, 75, 0.1);
+    }
+
+    #attach-chip {
+      position: absolute;
+      bottom: 120px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      align-items: center;
+      gap: 10px;
+      background: rgba(0, 255, 136, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 255, 136, 0.3);
+      border-radius: 12px;
+      padding: 8px 16px;
+      font-size: 13px;
+      color: var(--green);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      animation: chipIn 0.3s ease-out;
+    }
+
+    @keyframes chipIn {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+    }
+
+    #attach-chip.visible {
+      display: flex;
+    }
+
+    #attach-chip-x {
+      cursor: pointer;
+      opacity: 0.6;
+      font-size: 16px;
+      margin-left: 5px;
+    }
+
+    #attach-chip-x:hover {
+      opacity: 1;
+      color: #fff;
+    }
+  </style>
 </head>
+
 <body>
-<div id="app">
-  <header>
-    <div class="logo-pill">
-      <div class="dot" id="dot"></div>
-      <span class="logo-text" id="brand">DUCKLLM</span>
-    </div>
-    <div class="header-right">
-    </div>
-  </header>
+  <div id="app">
+    <header>
+      <div class="logo-pill">
+        <div class="dot" id="dot"></div>
+        <span class="logo-text" id="brand">DUCKLLM</span>
+      </div>
+      <div class="header-right">
+      </div>
+    </header>
 
-  <div id="chat">
-    <div id="thinking">
-      <div class="think-bubble">
-        <div class="tdots"><span></span><span></span><span></span></div>
-        <span class="think-lbl" id="think-lbl">Thinking</span>
+    <div id="chat">
+      <div id="thinking">
+        <div class="think-bubble">
+          <div class="tdots"><span></span><span></span><span></span></div>
+          <span class="think-lbl" id="think-lbl">Thinking</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="attach-chip">
+      <span>📄</span>
+      <span id="attach-chip-name"></span>
+      <span id="attach-chip-x" onclick="clearAttach()">✕</span>
+    </div>
+    <div id="input-area">
+      <div id="input-pill">
+        <textarea id="input" placeholder="Ask DuckLLM..." rows="1"></textarea>
+      </div>
+      <div id="plus-wrap">
+        <div id="plus-menu">
+          <button class="menu-btn" id="menu-web" onclick="toggleWeb()">🌐 Web</button>
+          <button class="menu-btn" id="menu-unfi" onclick="toggleUnfi()">🔓 Unfiltered</button>
+          <button class="menu-btn" id="menu-file" onclick="document.getElementById('file-input').click()">📎
+            Attach</button>
+          <input type="file" id="file-input" accept="image/*,.pdf,.txt,.py,.js,.ts,.html,.css,.json,.md,.csv"
+            style="display:none" onchange="handleFile(this)">
+        </div>
+        <button id="plus-btn" onclick="toggleMenu()">+</button>
       </div>
     </div>
   </div>
 
-  <div id="attach-chip">
-    <span>📄</span>
-    <span id="attach-chip-name"></span>
-    <span id="attach-chip-x" onclick="clearAttach()">✕</span>
-  </div>
-  <div id="input-area">
-    <div id="input-pill">
-      <textarea id="input" placeholder="Ask DuckLLM..." rows="1"></textarea>
-    </div>
-    <div id="plus-wrap">
-      <div id="plus-menu">
-        <button class="menu-btn" id="menu-web"  onclick="toggleWeb()">🌐 Web</button>
-        <button class="menu-btn" id="menu-unfi" onclick="toggleUnfi()">🔓 Unfiltered</button>
-        <button class="menu-btn" id="menu-file" onclick="document.getElementById('file-input').click()">📎 Attach</button>
-        <input type="file" id="file-input" accept="image/*,.pdf,.txt,.py,.js,.ts,.html,.css,.json,.md,.csv" style="display:none" onchange="handleFile(this)">
-      </div>
-      <button id="plus-btn" onclick="toggleMenu()">+</button>
-    </div>
-  </div>
-</div>
+  <script>
+    let chatHistory = [], busy = false, webMode = false, unfiMode = false;
+    let pendingImageB64 = null, pendingFileText = null;
 
-<script>
-let chatHistory=[], busy=false, webMode=false, unfiMode=false;
-let pendingImageB64=null, pendingFileText=null;
+    (async () => {
+      try {
+        const r = await fetch('http://localhost:17432/duckllm_settings.json');
+        if (r.ok) { const s = await r.json(); webMode = s.web_mode || false; unfiMode = s.unfiltered_mode || false; syncUI(); }
+      } catch (e) { console.warn('Settings load failed:', e); }
 
-(async()=>{
-  try{
-    const r=await fetch('http://localhost:17432/duckllm_settings.json');
-    if(r.ok){ const s=await r.json(); webMode=s.web_mode||false; unfiMode=s.unfiltered_mode||false; syncUI(); }
-  }catch(e){ console.warn('Settings load failed:', e); }
+      try {
+        const r = await fetch('http://localhost:17432/duckllm_chat.json?_=' + Date.now());
+        if (!r.ok) { console.warn('Chat fetch not ok:', r.status); return; }
+        const msgs = await r.json();
+        console.log('Loaded msgs:', msgs);
+        if (Array.isArray(msgs) && msgs.length) {
+          chatHistory = msgs;
+          msgs.forEach(m => {
+            const text = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
+            addBubble(m.role, text);
+          });
+          scrollEnd();
+        }
+      } catch (e) { console.error('Chat load failed:', e); }
+    })();
 
-  try{
-    const r=await fetch('http://localhost:17432/duckllm_chat.json?_='+Date.now());
-    if(!r.ok){ console.warn('Chat fetch not ok:', r.status); return; }
-    const msgs=await r.json();
-    console.log('Loaded msgs:', msgs);
-    if(Array.isArray(msgs) && msgs.length){
-      chatHistory=msgs;
-      msgs.forEach(m=>{
-        const text=typeof m.content==='string'?m.content:JSON.stringify(m.content);
-        addBubble(m.role, text);
-      });
-      scrollEnd();
+    function syncUI() {
+      document.getElementById('menu-web').classList.toggle('on-web', webMode);
+      document.getElementById('menu-unfi').classList.toggle('on-unfi', unfiMode);
+      const x = [];
+      if (webMode) x.push('WEB');
+      if (unfiMode) x.push('UNFILTERED');
+      document.getElementById('brand').textContent = x.length ? `DUCKLLM [${x.join(' ')}]` : 'DUCKLLM';
     }
-  }catch(e){ console.error('Chat load failed:', e); }
-})();
+    function toggleWeb() { webMode = !webMode; syncUI(); saveSettings(); }
+    function toggleUnfi() { unfiMode = !unfiMode; syncUI(); saveSettings(); }
 
-function syncUI(){
-  document.getElementById('menu-web').classList.toggle('on-web', webMode);
-  document.getElementById('menu-unfi').classList.toggle('on-unfi', unfiMode);
-  const x=[];
-  if(webMode) x.push('WEB');
-  if(unfiMode) x.push('UNFILTERED');
-  document.getElementById('brand').textContent=x.length?`DUCKLLM [${x.join(' ')}]`:'DUCKLLM';
-}
-function toggleWeb(){ webMode=!webMode; syncUI(); saveSettings(); }
-function toggleUnfi(){ unfiMode=!unfiMode; syncUI(); saveSettings(); }
-
-function saveSettings(){
-  fetch('http://localhost:17432/save-settings',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({web_mode:webMode, unfiltered_mode:unfiMode},null,2)
-  }).catch(()=>{});
-}
-
-let menuOpen=false;
-function toggleMenu(){
-  menuOpen=!menuOpen;
-  document.getElementById('plus-btn').classList.toggle('open', menuOpen);
-  document.getElementById('plus-menu').classList.toggle('open', menuOpen);
-}
-// close menu when clicking outside
-document.addEventListener('click', e=>{
-  if(menuOpen && !document.getElementById('plus-wrap').contains(e.target)){
-    menuOpen=false;
-    document.getElementById('plus-btn').classList.remove('open');
-    document.getElementById('plus-menu').classList.remove('open');
-  }
-});
-
-function setDot(c){ const d=document.getElementById('dot'); d.style.background=c; d.style.boxShadow=`0 0 8px ${c}`; }
-
-const inp=document.getElementById('input');
-inp.addEventListener('input',()=>{ inp.style.height='auto'; inp.style.height=Math.min(inp.scrollHeight,140)+'px'; });
-inp.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();} });
-
-function handleFile(fileInput){
-  const file=fileInput.files[0];
-  if(!file) return;
-  const isImg=file.type.startsWith('image/');
-  const reader=new FileReader();
-  reader.onload=e=>{
-    if(isImg){
-      pendingImageB64=e.target.result.split(',')[1];
-      pendingFileText=null;
-    } else {
-      pendingImageB64=null;
-      pendingFileText=`[File: ${file.name}]\n${e.target.result}`;
+    function saveSettings() {
+      fetch('http://localhost:17432/save-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ web_mode: webMode, unfiltered_mode: unfiMode }, null, 2)
+      }).catch(() => { });
     }
-    const chip=document.getElementById('attach-chip');
-    chip.querySelector('span').textContent=isImg?'🖼':'📄';
-    document.getElementById('attach-chip-name').textContent=file.name;
-    chip.classList.add('visible');
-    const btn=document.getElementById('menu-file');
-    btn.textContent='📎 Attach';
-    btn.style.color=''; btn.style.borderColor='';
-    toggleMenu();
-  };
-  isImg ? reader.readAsDataURL(file) : reader.readAsText(file);
-  fileInput.value='';
-}
 
-function clearAttach(){
-  pendingImageB64=null;
-  pendingFileText=null;
-  document.getElementById('attach-chip').classList.remove('visible');
-  const btn=document.getElementById('menu-file');
-  btn.textContent='📎 Attach';
-  btn.style.color=''; btn.style.borderColor='';
-  btn.onclick=()=>document.getElementById('file-input').click();
-}
-
-const thinkEl=document.getElementById('thinking');
-const thinkLbl=document.getElementById('think-lbl');
-const phrases=['Thinking','Processing','Analyzing','Generating'];
-let tTimer=null;
-function showThink(lbl){ thinkLbl.textContent=lbl||'Thinking'; thinkEl.classList.add('on'); let i=0; tTimer=setInterval(()=>{ thinkLbl.textContent=phrases[i++%phrases.length]; },1800); scrollEnd(); }
-function hideThink(){ clearInterval(tTimer); thinkEl.classList.remove('on'); }
-function scrollEnd(){ const c=document.getElementById('chat'); c.scrollTop=c.scrollHeight; }
-function saveChat(){
-  try{
-    fetch('http://localhost:17432/save',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(chatHistory.map(m=>({role:m.role,content:m.content})),null,2)
+    let menuOpen = false;
+    function toggleMenu() {
+      menuOpen = !menuOpen;
+      document.getElementById('plus-btn').classList.toggle('open', menuOpen);
+      document.getElementById('plus-menu').classList.toggle('open', menuOpen);
+    }
+    // close menu when clicking outside
+    document.addEventListener('click', e => {
+      if (menuOpen && !document.getElementById('plus-wrap').contains(e.target)) {
+        menuOpen = false;
+        document.getElementById('plus-btn').classList.remove('open');
+        document.getElementById('plus-menu').classList.remove('open');
+      }
     });
-  }catch{}
-}
 
-function renderText(text){
-  const frag=document.createDocumentFragment();
-  const re=/```(\w*)\n?([\s\S]*?)```/g;
-  let last=0,m;
-  while((m=re.exec(text))!==null){
-    if(m.index>last) appendTxt(frag,text.slice(last,m.index));
-    frag.appendChild(mkCode(m[2],m[1]));
-    last=m.index+m[0].length;
-  }
-  if(last<text.length) appendTxt(frag,text.slice(last));
-  return frag;
-}
+    function setDot(c) { const d = document.getElementById('dot'); d.style.background = c; d.style.boxShadow = `0 0 8px ${c}`; }
 
-function appendTxt(parent,txt){
-  if(!txt.trim()) return;
-  const p=document.createElement('p');
-  p.style.margin='4px 0';
-  p.innerHTML=txt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/`([^`]+)`/g,'<code>$1</code>');
-  parent.appendChild(p);
-}
+    const inp = document.getElementById('input');
+    inp.addEventListener('input', () => { inp.style.height = 'auto'; inp.style.height = Math.min(inp.scrollHeight, 140) + 'px'; });
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } });
 
-function mkCode(code,lang){
-  const d=document.createElement('div');
-  d.className='code-wrap';
-  d.innerHTML=`<div class="code-top"><span class="code-lang">${lang||'code'}</span><button class="code-copy-btn">Copy</button></div><div class="code-pre"></div>`;
-  d.querySelector('.code-pre').textContent=code.trimEnd();
-  d.querySelector('.code-copy-btn').onclick=function(){ navigator.clipboard.writeText(code); this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy',1500); };
-  return d;
-}
-
-function addBubble(role,text){
-  const chat=document.getElementById('chat');
-  const row=document.createElement('div'); row.className=`msg-row ${role}`;
-  const bub=document.createElement('div'); bub.className='bubble';
-  bub.appendChild(renderText(text));
-  row.appendChild(bub);
-  chat.insertBefore(row,thinkEl);
-  scrollEnd();
-  return bub;
-}
-
-function streamBubble(){
-  const chat=document.getElementById('chat');
-  const row=document.createElement('div'); row.className='msg-row assistant';
-  const bub=document.createElement('div'); bub.className='bubble';
-  const p=document.createElement('p'); p.style.margin='0';
-  const cur=document.createElement('span'); cur.className='cursor';
-  p.appendChild(cur); bub.appendChild(p); row.appendChild(bub);
-  chat.insertBefore(row,thinkEl);
-  scrollEnd();
-  return {bub,p,cur};
-}
-
-async function sendMsg(){
-  const q=inp.value.trim();
-  if(!q||busy) return;
-  busy=true;
-  inp.value=''; inp.style.height='auto';
-  inp.disabled=true;
-  setDot('#FFCC00');
-  addBubble('user',q);
-  const imgB64=pendingImageB64;
-  const fileText=pendingFileText;
-  if(imgB64||fileText) clearAttach();
-  webMode ? await doWeb(q) : await doChat(q,imgB64,fileText);
-  busy=false;
-  inp.disabled=false;
-  inp.focus();
-  setDot('#00FF88');
-}
-
-async function doChat(q,imgB64,fileText){
-  showThink('Thinking');
-  const content = fileText ? `${q}\n\n${fileText}` : q;
-  const userMsg={role:'user',content};
-  if(imgB64) userMsg.images=[imgB64];
-  chatHistory.push(userMsg);
-  const model=unfiMode?'DuckLLM_Unfiltered:latest':'DuckLLM:latest';
-  try{
-    const res=await fetch('http://localhost:11434/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,messages:chatHistory,stream:true})});
-    hideThink(); setDot('#00CCFF');
-    const {bub,p,cur}=streamBubble();
-    const reader=res.body.getReader(), dec=new TextDecoder();
-    let full='';
-    while(true){
-      const {done,value}=await reader.read(); if(done) break;
-      for(const line of dec.decode(value).split('\n').filter(Boolean)){
-        try{ const t=JSON.parse(line)?.message?.content||''; full+=t; p.textContent=full; p.appendChild(cur); scrollEnd(); }catch{}
-      }
+    function handleFile(fileInput) {
+      const file = fileInput.files[0];
+      if (!file) return;
+      const isImg = file.type.startsWith('image/');
+      const reader = new FileReader();
+      reader.onload = e => {
+        if (isImg) {
+          pendingImageB64 = e.target.result.split(',')[1];
+          pendingFileText = null;
+        } else {
+          pendingImageB64 = null;
+          pendingFileText = `[File: ${file.name}]\n${e.target.result}`;
+        }
+        const chip = document.getElementById('attach-chip');
+        chip.querySelector('span').textContent = isImg ? '🖼' : '📄';
+        document.getElementById('attach-chip-name').textContent = file.name;
+        chip.classList.add('visible');
+        const btn = document.getElementById('menu-file');
+        btn.textContent = '📎 Attach';
+        btn.style.color = ''; btn.style.borderColor = '';
+        toggleMenu();
+      };
+      isImg ? reader.readAsDataURL(file) : reader.readAsText(file);
+      fileInput.value = '';
     }
-    cur.remove(); p.remove(); bub.appendChild(renderText(full));
-    chatHistory.push({role:'assistant',content:full});
-    if(chatHistory.length>10) chatHistory=chatHistory.slice(-10);
-    saveChat();
-    scrollEnd();
-  }catch(e){ hideThink(); addBubble('assistant',`Error: ${e.message}`); }
-}
 
-async function doWeb(q){
-  showThink('Searching');
-  const model=unfiMode?'DuckLLM_Unfiltered:latest':'DuckLLM:latest';
-  let context='',sources=[];
-  try{
-    const r=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://html.duckduckgo.com/html/?q='+encodeURIComponent(q))}`);
-    const d=await r.json(), html=d.contents||'';
-    context=[...html.matchAll(/class="result__snippet"[^>]*>(.*?)<\/a>/gs)].slice(0,6).map(m=>m[1].replace(/<[^>]+>/g,'').trim()).filter(Boolean).join(' ');
-    sources=[...html.matchAll(/uddg=([^&"]+)/g)].slice(0,4).map(m=>{ try{ return new URL(decodeURIComponent(m[1])).hostname.replace('www.',''); }catch{return null;} }).filter(Boolean);
-  }catch{}
-  if(!context) context='No results found.';
-  try{
-    const res=await fetch('http://localhost:11434/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,prompt:`Answer concisely under 100 words.\n\nContext: ${context}\n\nQuestion: ${q}`,stream:true})});
-    hideThink(); setDot('#00CCFF');
-    const {bub,p,cur}=streamBubble();
-    const reader=res.body.getReader(), dec=new TextDecoder();
-    let full='';
-    while(true){
-      const {done,value}=await reader.read(); if(done) break;
-      for(const line of dec.decode(value).split('\n').filter(Boolean)){
-        try{ const t=JSON.parse(line)?.response||''; full+=t; p.textContent=full; p.appendChild(cur); scrollEnd(); }catch{}
-      }
+    function clearAttach() {
+      pendingImageB64 = null;
+      pendingFileText = null;
+      document.getElementById('attach-chip').classList.remove('visible');
+      const btn = document.getElementById('menu-file');
+      btn.textContent = '📎 Attach';
+      btn.style.color = ''; btn.style.borderColor = '';
+      btn.onclick = () => document.getElementById('file-input').click();
     }
-    cur.remove();
-    if(sources.length) full+=`\n\nSources: ${sources.join(', ')}`;
-    p.remove(); bub.appendChild(renderText(full));
-    chatHistory.push({role:'user',content:q});
-    chatHistory.push({role:'assistant',content:full});
-    saveChat();
-    scrollEnd();
-  }catch(e){ hideThink(); addBubble('assistant',`Search error: ${e.message}`); }
-}
-</script>
+
+    const thinkEl = document.getElementById('thinking');
+    const thinkLbl = document.getElementById('think-lbl');
+    const phrases = ['Thinking', 'Processing', 'Analyzing', 'Generating'];
+    let tTimer = null;
+    function showThink(lbl) { thinkLbl.textContent = lbl || 'Thinking'; thinkEl.classList.add('on'); let i = 0; tTimer = setInterval(() => { thinkLbl.textContent = phrases[i++ % phrases.length]; }, 1800); scrollEnd(); }
+    function hideThink() { clearInterval(tTimer); thinkEl.classList.remove('on'); }
+    function scrollEnd() { const c = document.getElementById('chat'); c.scrollTop = c.scrollHeight; }
+    function saveChat() {
+      try {
+        fetch('http://localhost:17432/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(chatHistory.map(m => ({ role: m.role, content: m.content })), null, 2)
+        });
+      } catch { }
+    }
+
+    function renderText(text) {
+      const frag = document.createDocumentFragment();
+      const re = /```(\w*)\n?([\s\S]*?)```/g;
+      let last = 0, m;
+      while ((m = re.exec(text)) !== null) {
+        if (m.index > last) appendTxt(frag, text.slice(last, m.index));
+        frag.appendChild(mkCode(m[2], m[1]));
+        last = m.index + m[0].length;
+      }
+      if (last < text.length) appendTxt(frag, text.slice(last));
+      return frag;
+    }
+
+    function appendTxt(parent, txt) {
+      if (!txt.trim()) return;
+      const blocks = txt.trim().split(/\n\n+/);
+      blocks.forEach(block => {
+        const p = document.createElement('p');
+        p.style.margin = '8px 0';
+        let html = block.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        html = html.replace(/\b\*\*(.*?)\*\*\b/g, '<strong>$1</strong>');
+        html = html.replace(/\b\*(.*?)\*\b/g, '<em>$1</em>');
+        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+        // Handle simple bullet lists
+        if (html.startsWith('- ') || html.startsWith('* ')) {
+          const li = html.split(/\n[*-] /).map(item => `<li>${item.replace(/^[*-] /, '')}</li>`).join('');
+          p.innerHTML = `<ul>${li}</ul>`;
+        } else {
+          p.innerHTML = html.replace(/\n/g, '<br>');
+        }
+        parent.appendChild(p);
+      });
+    }
+
+    function mkCode(code, lang) {
+      const d = document.createElement('div');
+      d.className = 'code-wrap';
+      d.innerHTML = `<div class="code-top"><span class="code-lang">${lang || 'code'}</span><button class="code-copy-btn">Copy</button></div><div class="code-pre"></div>`;
+      d.querySelector('.code-pre').textContent = code.trimEnd();
+      d.querySelector('.code-copy-btn').onclick = function () { navigator.clipboard.writeText(code); this.textContent = 'Copied!'; setTimeout(() => this.textContent = 'Copy', 1500); };
+      return d;
+    }
+
+    function addBubble(role, text) {
+      const chat = document.getElementById('chat');
+      const row = document.createElement('div'); row.className = `msg-row ${role}`;
+      const bub = document.createElement('div'); bub.className = 'bubble';
+      bub.appendChild(renderText(text));
+      row.appendChild(bub);
+      chat.insertBefore(row, thinkEl);
+      scrollEnd();
+      return bub;
+    }
+
+    function streamBubble() {
+      const chat = document.getElementById('chat');
+      const row = document.createElement('div'); row.className = 'msg-row assistant';
+      const bub = document.createElement('div'); bub.className = 'bubble';
+      const p = document.createElement('p'); p.style.margin = '0';
+      const cur = document.createElement('span'); cur.className = 'cursor';
+      p.appendChild(cur); bub.appendChild(p); row.appendChild(bub);
+      chat.insertBefore(row, thinkEl);
+      scrollEnd();
+      return { bub, p, cur };
+    }
+
+    async function sendMsg() {
+      const q = inp.value.trim();
+      if (!q || busy) return;
+      busy = true;
+      inp.value = ''; inp.style.height = 'auto';
+      inp.disabled = true;
+      setDot('#FFCC00');
+      addBubble('user', q);
+      const imgB64 = pendingImageB64;
+      const fileText = pendingFileText;
+      if (imgB64 || fileText) clearAttach();
+      webMode ? await doWeb(q) : await doChat(q, imgB64, fileText);
+      busy = false;
+      inp.disabled = false;
+      inp.focus();
+      setDot('#00FF88');
+    }
+
+    async function doChat(q, imgB64, fileText) {
+      showThink('Thinking');
+      const content = fileText ? `${q}\n\n${fileText}` : q;
+      const userMsg = { role: 'user', content };
+      if (imgB64) userMsg.images = [imgB64];
+      chatHistory.push(userMsg);
+      const model = unfiMode ? 'DuckLLM_Unfiltered:latest' : 'DuckLLM:latest';
+      try {
+        const res = await fetch('http://localhost:11434/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model, messages: chatHistory, stream: true }) });
+        hideThink(); setDot('#00CCFF');
+        const { bub, p, cur } = streamBubble();
+        const reader = res.body.getReader(), dec = new TextDecoder();
+        let full = '';
+        while (true) {
+          const { done, value } = await reader.read(); if (done) break;
+          for (const line of dec.decode(value).split('\n').filter(Boolean)) {
+            try { const t = JSON.parse(line)?.message?.content || ''; full += t; p.textContent = full; p.appendChild(cur); scrollEnd(); } catch { }
+          }
+        }
+        cur.remove(); p.remove(); bub.appendChild(renderText(full));
+        chatHistory.push({ role: 'assistant', content: full });
+        if (chatHistory.length > 10) chatHistory = chatHistory.slice(-10);
+        saveChat();
+        scrollEnd();
+      } catch (e) { hideThink(); addBubble('assistant', `Error: ${e.message}`); }
+    }
+
+    async function doWeb(q) {
+      showThink('Searching');
+      const model = unfiMode ? 'DuckLLM_Unfiltered:latest' : 'DuckLLM:latest';
+      let context = '', sources = [];
+      try {
+        const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://html.duckduckgo.com/html/?q=' + encodeURIComponent(q))}`);
+        const d = await r.json(), html = d.contents || '';
+        context = [...html.matchAll(/class="result__snippet"[^>]*>(.*?)<\/a>/gs)].slice(0, 6).map(m => m[1].replace(/<[^>]+>/g, '').trim()).filter(Boolean).join(' ');
+        sources = [...html.matchAll(/uddg=([^&"]+)/g)].slice(0, 4).map(m => { try { return new URL(decodeURIComponent(m[1])).hostname.replace('www.', ''); } catch { return null; } }).filter(Boolean);
+      } catch { }
+      if (!context) context = 'No results found.';
+      try {
+        const res = await fetch('http://localhost:11434/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model, prompt: `Answer concisely under 100 words.\n\nContext: ${context}\n\nQuestion: ${q}`, stream: true }) });
+        hideThink(); setDot('#00CCFF');
+        const { bub, p, cur } = streamBubble();
+        const reader = res.body.getReader(), dec = new TextDecoder();
+        let full = '';
+        while (true) {
+          const { done, value } = await reader.read(); if (done) break;
+          for (const line of dec.decode(value).split('\n').filter(Boolean)) {
+            try { const t = JSON.parse(line)?.response || ''; full += t; p.textContent = full; p.appendChild(cur); scrollEnd(); } catch { }
+          }
+        }
+        cur.remove();
+        if (sources.length) full += `\n\nSources: ${sources.join(', ')}`;
+        p.remove(); bub.appendChild(renderText(full));
+        chatHistory.push({ role: 'user', content: q });
+        chatHistory.push({ role: 'assistant', content: full });
+        saveChat();
+        scrollEnd();
+      } catch (e) { hideThink(); addBubble('assistant', `Search error: ${e.message}`); }
+    }
+  </script>
 </body>
+
 </html>

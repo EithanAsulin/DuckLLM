@@ -127,7 +127,11 @@ class ChatMessageWidget(QFrame):
                 layout.addWidget(CodeBlock(content, lang))
             else:
                 if content.strip():
-                    lbl = QLabel(content.strip())
+                    lbl = QLabel()
+                    lbl.setTextFormat(Qt.MarkdownText)
+                    # Force hard breaks for single newlines in Markdown
+                    formatted = content.strip().replace("\n", "  \n")
+                    lbl.setText(formatted)
                     lbl.setWordWrap(True)
                     lbl.setTextInteractionFlags(Qt.TextSelectableByMouse)
                     color = "#CCC" if role == "assistant" else "#aaddff"
@@ -360,6 +364,7 @@ class DuckLLM(QWidget):
         self.chat_scroll.setWidget(self.chat_container)
 
         self._stream_label = QLabel()
+        self._stream_label.setTextFormat(Qt.MarkdownText)
         self._stream_label.setWordWrap(True)
         self._stream_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self._stream_label.setStyleSheet("color: #CCC; font-size: 16px; background: transparent;")
@@ -875,10 +880,15 @@ class DuckLLM(QWidget):
             self.expand_ui()
 
         self._current_stream += token
-        self._stream_label.setText(self._current_stream)
-        self.chat_scroll.verticalScrollBar().setValue(
-            self.chat_scroll.verticalScrollBar().maximum()
-        )
+        # Force hard breaks for single newlines in Markdown
+        formatted = self._current_stream.replace("\n", "  \n")
+        try:
+            self._stream_label.setText(formatted)
+            self.chat_scroll.verticalScrollBar().setValue(
+                self.chat_scroll.verticalScrollBar().maximum()
+            )
+        except RuntimeError:
+            pass # Signal source or label might be deleted during streaming
 
     def on_finished(self):
         self.is_thinking = False
