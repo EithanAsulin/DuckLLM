@@ -192,6 +192,8 @@
       line-height: 1.8;
       white-space: pre-wrap;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      unicode-bidi: isolate;
+      text-align: start;
     }
 
     .msg-row.user .bubble {
@@ -528,7 +530,6 @@
       document.getElementById('plus-btn').classList.toggle('open', menuOpen);
       document.getElementById('plus-menu').classList.toggle('open', menuOpen);
     }
-    // close menu when clicking outside
     document.addEventListener('click', e => {
       if (menuOpen && !document.getElementById('plus-wrap').contains(e.target)) {
         menuOpen = false;
@@ -614,17 +615,24 @@
       const blocks = txt.trim().split(/\n\n+/);
       blocks.forEach(block => {
         const p = document.createElement('p');
+        p.setAttribute('dir', 'auto');
         p.style.margin = '8px 0';
+        
         let html = block.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        
+        // Add trailing RLM if Hebrew is detected to fix punctuation jumping
+        const hasHebrew = /[\u0590-\u05FF]/.test(block);
+        if (hasHebrew) html += '\u200F';
+
         html = html.replace(/\b\*\*(.*?)\*\*\b/g, '<strong>$1</strong>');
         html = html.replace(/\b\*(.*?)\*\b/g, '<em>$1</em>');
         html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-        // Handle simple bullet lists
+
         if (html.startsWith('- ') || html.startsWith('* ')) {
-          const li = html.split(/\n[*-] /).map(item => `<li>${item.replace(/^[*-] /, '')}</li>`).join('');
+          const li = html.split(/\n[*-] /).map(item => `<li><bdi dir="auto">${item.replace(/^[*-] /, '')}</bdi></li>`).join('');
           p.innerHTML = `<ul>${li}</ul>`;
         } else {
-          p.innerHTML = html.replace(/\n/g, '<br>');
+          p.innerHTML = `<bdi dir="auto">${html.replace(/\n/g, '<br>')}</bdi>`;
         }
         parent.appendChild(p);
       });
@@ -643,6 +651,7 @@
       const chat = document.getElementById('chat');
       const row = document.createElement('div'); row.className = `msg-row ${role}`;
       const bub = document.createElement('div'); bub.className = 'bubble';
+      bub.setAttribute('dir', 'auto');
       bub.appendChild(renderText(text));
       row.appendChild(bub);
       chat.insertBefore(row, thinkEl);
@@ -654,7 +663,9 @@
       const chat = document.getElementById('chat');
       const row = document.createElement('div'); row.className = 'msg-row assistant';
       const bub = document.createElement('div'); bub.className = 'bubble';
+      bub.setAttribute('dir', 'auto');
       const p = document.createElement('p'); p.style.margin = '0';
+      p.setAttribute('dir', 'auto');
       const cur = document.createElement('span'); cur.className = 'cursor';
       p.appendChild(cur); bub.appendChild(p); row.appendChild(bub);
       chat.insertBefore(row, thinkEl);
@@ -688,7 +699,20 @@
       chatHistory.push(userMsg);
       const model = unfiMode ? 'DuckLLM_Unfiltered:latest' : 'DuckLLM:latest';
       try {
-        const res = await fetch('http://localhost:11434/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model, messages: chatHistory, stream: true }) });
+        const res = await fetch('http://localhost:11434/api/chat', { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' }, 
+          body: JSON.stringify({ 
+            model, 
+            messages: chatHistory, 
+            stream: true,
+            options: {
+              temperature: 0.4,
+              top_p: 0.9,
+              repeat_penalty: 1.2
+            }
+          }) 
+        });
         hideThink(); setDot('#00CCFF');
         const { bub, p, cur } = streamBubble();
         const reader = res.body.getReader(), dec = new TextDecoder();
@@ -719,7 +743,7 @@
       } catch { }
       if (!context) context = 'No results found.';
       try {
-        const res = await fetch('http://localhost:11434/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model, prompt: `Answer concisely under 100 words.\n\nContext: ${context}\n\nQuestion: ${q}`, stream: true }) });
+        const res = await fetch('http://localhost:11434/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model, prompt: `Respond in the same language as the query. Answer concisely.\n\nContext: ${context}\n\nQuestion: ${q}`, stream: true }) });
         hideThink(); setDot('#00CCFF');
         const { bub, p, cur } = streamBubble();
         const reader = res.body.getReader(), dec = new TextDecoder();
