@@ -7,7 +7,7 @@ from time import sleep as wait
 
 def run_command(cmd, shell=False, check=False):
     try:
-        result = subprocess.run(cmd, shell=shell, check=check)
+        subprocess.run(cmd, shell=shell, check=check)
         return True
     except subprocess.CalledProcessError as e:
         print(f"\n[ERROR] Command failed: {e}")
