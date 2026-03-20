@@ -1,5 +1,8 @@
-[![DuckLLM License](https://img.shields.io/badge/license-DuckLLM%20Proprietary-blue)](DuckLLM.license)
-[![Base Model](https://img.shields.io/badge/base-Qwen2.5%20Apache%202.0-green)](Apache-2.0.license)
+
+[![DuckLLM Model License](https://img.shields.io/badge/License-DuckLLM%20Proprietary-blue)](DuckLLM.license)
+[![DuckLLM](https://img.shields.io/badge/Version-DuckLLM%20%201.0-red)](src/README.txt)
+[![Base Model](https://img.shields.io/badge/Base-Qwen2.5%20Apache%202.0-green)](Apache-2.0.license)
+
 
 # Official Homepage
 https://eithanasulin.github.io/DuckLLM/
@@ -10,7 +13,7 @@ https://eithanasulin.github.io/DuckLLM/
 - Android
 
 # What's DuckLLM?
-DuckLLM is a Free Local LLM (AI) Which Excels In Privacy And Security While Maintaining Impressive Perfomance.
+DuckLLM is a Free Local LLM (AI) Which Excels In Privacy And Security While Maintaining Impressive Perfomance And Functionality .
 
 # Why DuckLLM?
 DuckLLM Offers a Modern Solution To Cloud Models (Like ChatGPT & Gemini), DuckLLM Makes It Easy To Locally Host a Model On Device For Both Desktop & Mobile With a Privacy Focused Design While Maintaining Functionality.
@@ -27,21 +30,21 @@ DuckLLM Utilizes Local AI To Ensure No Data Is Leaving The Computer, Other Than 
 
 - Run installer.py With Python (3.12 Or Older)
 
-- Type Anything (i Do Recommend Reading README.txt Before Though
+- Accept [![DuckLLM's Proprietary License](https://img.shields.io/badge/license-DuckLLM%20Proprietary-blue)](DuckLLM.license) To Download.
 
 - Select Your Operating System (Windows, Ubuntu, Debian, Arch Linux Or Other Aka Other Linux Distros)
 
 - DuckLLM Mobile
-> This Installation Only Covers Wllama 
+> This Installation Only Covers Wllama
 
 - Download DuckLLM Mobile From The Google Play Store
 - Enter The App And Enter Your Username (Or Skip) And Select Download Center
 - Download One Of These 3 Models
-> DuckLLM Light (0.5b)
+> DuckLLM Light (0.6b)
 
-> DuckLLM Base (1.5b)
+> DuckLLM Base (1.6b)
 
-> DuckLLM Pro (3b)
+> DuckLLM Pro (3.1b)
 
 I Recommend Base Or Light For Average Use!
 
@@ -51,7 +54,7 @@ In Linux You Can Add a Shortcut Via The Keyboard Section In Settings
 
 In Windows You Can Use Windows Powertoys To Create a Shortcut
 
-> Linux : python DuckLLM/DuckLLM.py
+> Linux : python ~/DuckLLM/DuckLLM.py
 
 > Windows python ~/Desktop/DuckLLM/DuckLLM.py
 
@@ -65,3 +68,7 @@ DuckLLM's Source Code Can Be Found In The **/src** Folder In This GitHub Reposit
 
 # Contributors 
 - **[psale](https://github.com/psale)**
+
+# License Info
+- **DuckLLM Proprietary License** Is The License For DuckLLM's Proprietary Models, Simply Stating That DuckLLM Is Only Allowed For Personal Use And For Commerical Use a Commerical License Must Be Purchased.
+- **Qwen Apache 2.0** Is The License For DuckLLM's Base Model (a Base Model Is Used Due To Just Not Being Able To Train From Scratch) 
