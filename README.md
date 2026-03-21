@@ -63,6 +63,9 @@ If You're Interested In Commerical Use Of The DuckLLM Model Contact One Of These
 - Email : duckinc68@gmail.com
 - Discord Community :  https://discord.com/invite/DkNt6FXf7J
 
+# Relations To Qwen
+You Should Be aware This Model is Kind Of a Fine Tune Due To Just Being Unable To Train From Scratch, The Purpose Of The Additional Training Is To Improve On Parts Where Alibaba Missed With Qwen2.5. 
+
 # Source Code (Open Source)
 DuckLLM's Source Code Can Be Found In The **/src** Folder In This GitHub Repository Or In The **Releases**.
 
