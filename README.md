@@ -7,61 +7,70 @@ https://eithanasulin.github.io/DuckLLM/
 
 # Supported Systems
 - Windows
-- macOS (New!)
+- macOS
 - Linux
 - Android
 
-# What's DuckLLM?
-DuckLLM is a Free Local LLM (AI) which excels in privacy and security while maintaining impressive performance and functionality. It makes it easy to locally host a model on your device for both Desktop & Mobile with a privacy-focused design.
+# What is DuckLLM?
+DuckLLM is a free, locally-run LLM designed with a strong focus on privacy and security, without compromising on performance or functionality. It simplifies the process of self-hosting an AI model on your own device - for both desktop and mobile - with a privacy-first architecture that ensures your data never leaves your machine.
 
-# Getting Started (Desktop)
-
-## For Developers (Source Setup)
-If you have cloned this repository:
-1. **Install Dependencies**: `npm install`
-2. **Launch Setup Wizard**: `npm start`
-3. **Build Portable Executable**: `npm run dist` (Output will be in `/dist`)
+# Getting Started
 
 ## For End Users (Standalone)
-1. **Download & Run**: Launch the `DuckLLM.exe` (Windows), `.dmg` (macOS), or `.AppImage` (Linux) from the releases.
-2. **Setup Wizard**: The wizard will automatically handle **Ollama** and **Python** installation if they are missing.
-3. **Select Model**: Choose between **Full** (7.6B) or **Light** (3.1B) modes.
+1. **Download**: Get the latest release for your platform - `DuckLLM.exe` (Windows), `.dmg` (macOS), or `.AppImage` (Linux).
+2. **Run the Setup Wizard**: The wizard will automatically handle **Ollama** and **Python** installation if they are not already present.
+3. **Select a Model**: Choose between **Full** (7.6B) or **Light** (3.1B) depending on your hardware.
+
+## For Developers (Source Setup)
+1. **Clone the repository** and navigate to the project directory.
+2. **Install dependencies**: `npm install`
+3. **Launch the app**: `npm start` - performs background dependency checks and starts immediately.
+4. **Run the setup wizard manually**: `npm run setup` - useful for maintenance or reinstallation.
+5. **Build a portable executable**: `npm run dist` - output will be placed in the `/dist` folder.
 
 ## Alternative: Python Manual Installer
-Run the installer directly from the source:
+You can also run the installer directly from source:
 ```bash
 python src/installer.py
 ```
 
+# Key Features
+- **Privacy First**: Fully local execution - no data is sent to external servers.
+- **Fast Boot**: Background dependency checks enable near-instant startup.
+- **RTL Support**: Improved Right-to-Left (Hebrew) text alignment and caret handling, optimized for both Windows and Linux.
+
 # DuckLLM Mobile
-> This installation only covers Wllama
+> Mobile installation currently uses Wllama for on-device inference.
 
-- Download DuckLLM Mobile from the Google Play Store.
-- Enter the App, skip or enter username, and select **Download Center**.
-- Download one of these 3 models:
-  - **DuckLLM Light (0.6b)** (Recommended for average use)
-  - **DuckLLM Base (1.6b)**
-  - **DuckLLM Pro (3.1b)**
+1. Download DuckLLM from the Google Play Store.
+2. Open the app, complete or skip the username setup, and navigate to **Download Center**.
+3. Choose one of the available models:
+   - **DuckLLM Light (0.6B)** - Recommended for most devices
+   - **DuckLLM Base (1.6B)**
+   - **DuckLLM Pro (3.1B)**
 
-# How To Add a Shortcut
-- **Linux**: Add a keyboard shortcut in Settings to run: `python ~/DuckLLM/DuckLLM.py`
-- **Windows**: Use PowerToys or a desktop shortcut to run: `python ~/Desktop/DuckLLM/DuckLLM.py`
-- **Note**: Click `Del` to Show and your chosen key to Hide.
+# Keyboard Shortcuts (Desktop)
+To launch DuckLLM via a keyboard shortcut:
 
-# DuckLLM For Commercial Use
-If you're interested in commercial use of the DuckLLM model, contact:
+- **Linux**: Add a custom shortcut in System Settings pointing to: `python ~/DuckLLM/DuckLLM.py`
+- **Windows**: Use PowerToys or a desktop shortcut pointing to: `python ~/Desktop/DuckLLM/DuckLLM.py`
+
+> Press `Del` to show the window and your configured key to hide it.
+
+# Relationship to Qwen
+DuckLLM is built on **Qwen 2.5** as its base model and extends it through fine-tuning aimed at improving performance in specific areas where the base model underperforms. Training a large language model from scratch was outside the scope of this project; the additional training is focused on targeted improvements rather than architectural changes.
+
+# Commercial Use
+For inquiries regarding commercial licensing, please reach out via:
 - **Email**: duckinc68@gmail.com
 - **Discord**: https://discord.com/invite/DkNt6FXf7J
 
-# Relations To Qwen
-i Want To Clarify This, You Should Be aware This Model is Kind Of a Fine Tune Due To Just Being Unable To Train From Scratch, The Purpose Of The Additional Training Is To Improve On Parts Where Alibaba Missed With Qwen2.5. 
+# Source Code
+DuckLLM's source code is available in the **/src** folder of this repository and is also included in the official releases.
 
-# Source Code (Open Source)
-DuckLLM's source code can be found in the **/src** folder in this GitHub repository or in the **Releases**.
-
-# Contributors 
+# Contributors
 - **[psale](https://github.com/psale)**
 
-# License Info
-- **DuckLLM Proprietary License**: For proprietary models (Personal use only; Commercial license required for business).
-- **Qwen Apache 2.0**: For the DuckLLM base model (Qwen 2.5).
+# License
+- **DuckLLM Proprietary License**: Covers the DuckLLM model weights. Free for personal use; a commercial license is required for business use.
+- **Apache 2.0**: Covers the Qwen 2.5 base model.

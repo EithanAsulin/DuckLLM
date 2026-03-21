@@ -39,6 +39,19 @@ def append_to_bashrc(content):
         print(f"Failed to update .bashrc: {e}")
         return False
 
+def move_project_files(target_dir):
+    """Moves project files to the specified directory."""
+    print("=== Moving Files === ")
+    target_dir = Path(target_dir)
+    target_dir.mkdir(parents=True, exist_ok=True)
+    files_to_move = ["DuckLLM.py", "Attachment.png", "Web.png", "Unfiltered.png", "duckllm_settings.json", "duckllm_chat.json"]
+    for file in files_to_move:
+        if Path(file).exists():
+            try:
+                shutil.move(str(file), str(target_dir / file))
+            except Exception as e:
+                print(f"Warning: Could not move {file}: {e}")
+
 def setup_ollama_models(model_choice):
     print(f"=== Setting Up LLM Models ({model_choice.capitalize()}) === ")
     
@@ -102,17 +115,10 @@ def main():
             append_to_bashrc("export OLLAMA_KEEP_ALIVE=-1")
 
             setup_ollama_models(model_choice)
-
-            print("=== Moving Files === ")
-            target_dir = Path.home() / "DuckLLM"
-            target_dir.mkdir(parents=True, exist_ok=True)
-            files_to_move = ["DuckLLM.py", "Attachment.png", "Web.png", "Unfiltered.png", "duckllm_settings.json", "duckllm_chat.json"]
-            for file in files_to_move:
-                if Path(file).exists():
-                    shutil.move(file, target_dir / file)
+            move_project_files(Path.home() / "DuckLLM")
 
             print("=== Installation Complete === ")
-            print(f"Run: python {target_dir}/DuckLLM.py")
+            print(f"Run: python {Path.home() / 'DuckLLM'}/DuckLLM.py")
 
         elif ask_distro == "windows":
             distro = True
@@ -126,14 +132,8 @@ def main():
             
             setup_ollama_models(model_choice)
             
-            desktop = Path.home() / "Desktop"
-            duckllm_path = desktop / "DuckLLM"
-            duckllm_path.mkdir(parents=True, exist_ok=True)
-            
-            files_to_move = ["DuckLLM.py", "Attachment.png", "Web.png", "Unfiltered.png", "duckllm_settings.json", "duckllm_chat.json"]
-            for file in files_to_move:
-                if Path(file).exists():
-                    shutil.move(str(file), str(duckllm_path / file))
+            duckllm_path = Path.home() / "Desktop" / "DuckLLM"
+            move_project_files(duckllm_path)
 
             print("=== Installation Complete === ")
             print(f"Location: {duckllm_path}")
@@ -147,12 +147,7 @@ def main():
             subprocess.Popen("ollama serve", shell=True)
             
             target_dir = Path.home() / "Documents" / "DuckLLM"
-            target_dir.mkdir(parents=True, exist_ok=True)
-            
-            files_to_move = ["DuckLLM.py", "Attachment.png", "Web.png", "Unfiltered.png", "duckllm_settings.json", "duckllm_chat.json"]
-            for file in files_to_move:
-                if Path(file).exists():
-                    shutil.move(str(file), str(target_dir / file))
+            move_project_files(target_dir)
 
             print("=== Installation Complete === ")
             print(f"Location: {target_dir}")

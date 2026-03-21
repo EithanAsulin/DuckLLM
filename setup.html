@@ -98,54 +98,36 @@
                     </div>
                 </div>
 
-                <div x-show="isInstalling" class="w-full bg-white/5 h-2 rounded-full overflow-hidden">
-                    <div class="bg-[#0066FF] h-full animate-pulse" style="width: 100%"></div>
+                <div x-show="isReady" class="pt-4">
+                    <button @click="step = 'model'" class="w-full py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 font-bold transition-all">
+                        Continue to Model Selection
+                    </button>
                 </div>
 
-                <div class="flex gap-4">
-                    <button :disabled="!isReady" @click="step = 'model'" :class="isReady ? 'bg-[#0066FF] opacity-100' : 'bg-slate-700 opacity-50'" class="flex-1 py-5 rounded-2xl font-black text-lg transition-all shadow-xl">
-                        Continue
-                    </button>
-                    <button x-show="deps.hasModels" @click="openUninstall()" class="px-6 py-5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 font-bold hover:bg-red-500/20 transition-all">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
+                <div x-show="!isReady && !isInstalling" class="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 text-center">
+                    <p class="text-xs text-blue-400 font-medium">Please install the required dependencies to proceed.</p>
                 </div>
             </div>
 
-            <!-- Smart Uninstall Modal -->
-            <div x-show="showUninstall" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-10 z-[60]" x-transition>
-                <div class="bg-[#0f1012] border border-white/10 p-8 rounded-[2.5rem] max-w-2xl w-full space-y-6 flex flex-col max-h-[85vh] shadow-2xl">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <i class="fa-solid fa-broom-wide text-red-500 text-2xl"></i>
-                            <h2 class="text-2xl font-black italic uppercase italic">Deep Cleaner</h2>
-                        </div>
-                        <button @click="showUninstall = false" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors">
-                            <i class="fa-solid fa-xmark text-sm"></i>
-                        </button>
-                    </div>
-
-                    <p class="text-slate-400 text-sm">Select the models you wish to permanently remove from your Ollama library.</p>
-                    
-                    <div class="flex-1 overflow-y-auto space-y-2 pr-2">
-                        <template x-for="m in availableModels" :key="m.name">
-                            <label class="flex items-center justify-between p-4 rounded-xl border border-white/5 hover:bg-white/5 transition-all cursor-pointer" :class="selectedModels.includes(m.name) ? 'bg-red-500/5 border-red-500/20' : ''">
-                                <div class="flex items-center gap-4">
-                                    <div class="relative flex items-center">
-                                        <input type="checkbox" :value="m.name" x-model="selectedModels" class="w-5 h-5 rounded-md appearance-none border-2 border-white/10 checked:bg-red-500 checked:border-red-500 transition-all cursor-pointer">
-                                        <i class="fa-solid fa-check absolute text-[10px] left-1 text-white pointer-events-none" x-show="selectedModels.includes(m.name)"></i>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold text-sm" x-text="m.name"></div>
-                                        <div class="text-[10px] text-slate-500 font-bold" x-text="m.size"></div>
-                                    </div>
+            <!-- Deep Cleaner (Uninstall) UI -->
+            <div x-show="showUninstall" class="max-w-xl mx-auto w-full space-y-6">
+                <h2 class="text-3xl font-black tracking-tight text-red-500">Deep Cleaner</h2>
+                <div class="p-6 rounded-3xl bg-white/5 border border-white/5 space-y-4">
+                    <p class="text-sm text-slate-400 italic">Select the local DuckLLM internal models you wish to wipe from your disk.</p>
+                    <div class="max-h-60 overflow-y-auto space-y-2 pr-2">
+                        <template x-for="model in availableModels" :key="model.name">
+                            <div @click="selectedModels.includes(model.name) ? selectedModels = selectedModels.filter(m => m !== model.name) : selectedModels.push(model.name)" 
+                                 :class="selectedModels.includes(model.name) ? 'border-red-500 bg-red-500/10' : 'border-white/5 bg-white/5'"
+                                 class="p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between">
+                                <div>
+                                    <p class="font-bold text-sm" x-text="model.name"></p>
+                                    <p class="text-[10px] text-slate-500" x-text="model.size"></p>
                                 </div>
-                                <div x-show="m.name.toLowerCase().includes('duck')" class="text-[9px] font-black uppercase tracking-widest bg-blue-500/10 text-blue-400 px-2 py-1 rounded-md">DuckLLM Core</div>
-                            </label>
+                                <i :class="selectedModels.includes(model.name) ? 'fa-square-check text-red-500' : 'fa-square text-slate-700'" class="fa-solid text-xl"></i>
+                            </div>
                         </template>
                     </div>
-
-                    <div class="flex items-center justify-between pt-4 border-t border-white/5">
+                    <div class="pt-4 flex items-center justify-between">
                         <div class="flex gap-4">
                             <button @click="selectedModels = availableModels.map(m => m.name)" class="text-[10px] font-bold text-slate-500 hover:text-white uppercase transition-colors tracking-widest">Select All</button>
                             <button @click="selectedModels = []" class="text-[10px] font-bold text-slate-500 hover:text-white uppercase transition-colors tracking-widest">Clear All</button>
@@ -159,15 +141,20 @@
 
             <!-- Model Selection Step -->
             <div x-show="step === 'model'" x-transition class="space-y-8 py-5">
-                <h2 class="text-3xl font-black tracking-tight text-center">Select Your Experience</h2>
+                <div class="text-center space-y-2">
+                    <h2 class="text-3xl font-black tracking-tight">Select Your Experience</h2>
+                    <p class="text-[10px] uppercase tracking-widest text-[#0066FF] font-black" x-text="'Detected: ' + gpuInfo.name + ' (' + gpuInfo.vram + 'GB VRAM)'"></p>
+                </div>
                 <div class="grid grid-cols-2 gap-6">
-                    <div @click="modelSelection = 'full'" :class="modelSelection === 'full' ? 'border-[#0066FF] bg-blue-500/10' : 'border-white/5 bg-white/5'" class="p-8 rounded-[2rem] border-2 cursor-pointer transition-all hover:scale-[1.02]">
+                    <div @click="modelSelection = 'full'" :class="modelSelection === 'full' ? 'border-[#0066FF] bg-blue-500/10' : 'border-white/5 bg-white/5'" class="relative p-8 rounded-[2rem] border-2 cursor-pointer transition-all hover:scale-[1.02]">
+                        <div x-show="gpuInfo.vram >= 6" class="absolute -top-3 -right-3 bg-[#00FF88] text-black text-[10px] font-black px-3 py-1 rounded-full shadow-lg">RECOMMENDED</div>
                         <h3 class="text-2xl font-black mb-2">Full Mode</h3>
-                        <p class="text-sm text-slate-400">7.6B Parameters. High quality responses. Recommended for 16GB+ RAM.</p>
+                        <p class="text-sm text-slate-400">7.6B Parameters. High quality responses. Recommended for high-end GPUs.</p>
                     </div>
-                    <div @click="modelSelection = 'light'" :class="modelSelection === 'light' ? 'border-[#0066FF] bg-blue-500/10' : 'border-white/5 bg-white/5'" class="p-8 rounded-[2rem] border-2 cursor-pointer transition-all hover:scale-[1.02]">
+                    <div @click="modelSelection = 'light'" :class="modelSelection === 'light' ? 'border-[#0066FF] bg-blue-500/10' : 'border-white/5 bg-white/5'" class="relative p-8 rounded-[2rem] border-2 cursor-pointer transition-all hover:scale-[1.02]">
+                        <div x-show="gpuInfo.vram < 6" class="absolute -top-3 -right-3 bg-[#00FF88] text-black text-[10px] font-black px-3 py-1 rounded-full shadow-lg">RECOMMENDED</div>
                         <h3 class="text-2xl font-black mb-2">Light Mode</h3>
-                        <p class="text-sm text-slate-400">3.1B Parameters. Fast & Efficient. Recommended for Laptops or 8GB RAM.</p>
+                        <p class="text-sm text-slate-400">3.1B Parameters. Fast & Efficient. Recommended for GTX 1050 or Laptops.</p>
                     </div>
                 </div>
                 <button @click="finalize()" class="bg-[#0066FF] hover:bg-blue-700 w-full py-5 rounded-2xl font-black text-lg transition-all shadow-xl">
@@ -250,6 +237,7 @@
             return {
                 step: 'welcome',
                 deps: { ollama: false, python: false, admin: false, hasModels: false },
+                gpuInfo: { name: 'Checking hardware...', vram: 0 },
                 isReady: false,
                 isInstalling: false,
                 modelSelection: 'full',
@@ -266,8 +254,17 @@
 
                 async startStep() {
                     this.step = 'dependencies';
+                    await window.electronAPI.killExisting();
                     this.deps = await window.electronAPI.checkDependencies();
+                    this.gpuInfo = await window.electronAPI.checkGpu();
                     this.isReady = this.deps.ollama && !this.isOllamaOld();
+                    
+                    // Recommendation logic based on VRAM
+                    if (this.gpuInfo.vram < 6) {
+                        this.modelSelection = 'light';
+                    } else {
+                        this.modelSelection = 'full';
+                    }
                 },
 
                 async openUninstall() {

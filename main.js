@@ -33,7 +33,54 @@ const parseProgress = (line) => {
 // Global handles
 let mainWindow;
 
+// Helper to perform the same checks as the IPC handler internally
+function checkSystemReady() {
+    const isWin = process.platform === 'win32';
+    try {
+        // Quick check for ollama
+        const ollamaCmd = (isWin) ? 'ollama' : (fs.existsSync('/usr/local/bin/ollama') ? '/usr/local/bin/ollama' : 'ollama');
+        execSync(`${ollamaCmd} --version`, { stdio: 'ignore', windowsHide: isWin });
+        
+        // Quick check for models
+        const listOutput = execSync(`${ollamaCmd} list`, { stdio: 'pipe', windowsHide: isWin }).toString();
+        const hasDuck = /duck/i.test(listOutput);
+        
+        return hasDuck;
+    } catch (e) { return false; }
+}
+
+function launchPythonBackend() {
+    const isWin = process.platform === 'win32';
+    const scriptPath = path.join(__dirname, 'src', 'DuckLLM.py');
+    console.log("Ready detected. Launching Backend directly...");
+    
+    const tryLaunch = (pyCmd) => {
+        try {
+            const proc = spawn(pyCmd, [scriptPath], { 
+                detached: true, 
+                stdio: 'ignore', 
+                windowsHide: isWin,
+                shell: false 
+            });
+            proc.unref();
+            return proc;
+        } catch (e) { return null; }
+    };
+
+    if (!tryLaunch(isWin ? 'pythonw' : 'python3')) tryLaunch('python');
+    setTimeout(() => { app.quit(); }, 1500);
+}
+
 function createWindow() {
+    // Check if user explicitly wants to go to setup (for maintenance/uninstall)
+    const forceSetup = process.argv.includes('--setup') || process.argv.includes('--uninstall') || process.argv.includes('-s');
+    const ready = checkSystemReady();
+    
+    if (ready && !forceSetup) {
+        launchPythonBackend();
+        return; // Jump directly to the app
+    }
+
     mainWindow = new BrowserWindow({
         width: 1000,
         height: 750,
@@ -107,6 +154,30 @@ ipcMain.handle('check-dependencies', async () => {
     } catch (e) {}
 
     return results;
+});
+
+ipcMain.handle('check-gpu', async () => {
+    const isWin = process.platform === 'win32';
+    if (!isWin) return { name: 'Unified Graphics', vram: 8 };
+
+    try {
+        // Try nvidia-smi first for precise VRAM
+        const nSmi = execSync('nvidia-smi --query-gpu=name,memory.total --format=csv,noheader,nounits', { stdio: 'pipe' }).toString().trim();
+        const parts = nSmi.split('\n')[0].split(', ');
+        const name = parts[0];
+        const vram = Math.round(parseInt(parts[1]) / 1024);
+        return { name, vram };
+    } catch (e) {
+        try {
+            // Fallback to wmic
+            const wmic = execSync('wmic path win32_VideoController get name', { stdio: 'pipe' }).toString().trim();
+            const lines = wmic.split('\n');
+            const name = lines[1] ? lines[1].trim() : 'Unknown GPU';
+            return { name, vram: 4 }; 
+        } catch (e2) {
+            return { name: 'Standard VGA Graphics', vram: 2 };
+        }
+    }
 });
 
 ipcMain.handle('get-ollama-models', async () => {
@@ -207,6 +278,16 @@ ipcMain.on('launch-app', () => {
 });
 
 ipcMain.on('close-app', () => app.quit());
+
+ipcMain.handle('kill-existing', async () => {
+    if (process.platform === 'win32') {
+        try {
+            execSync('taskkill /F /IM python.exe /T', { stdio: 'ignore', windowsHide: true });
+            execSync('taskkill /F /IM pythonw.exe /T', { stdio: 'ignore', windowsHide: true });
+        } catch (e) {}
+    }
+    return true;
+});
 
 ipcMain.handle('uninstall-app', async (event, modelsToRemove = []) => {
     const win = BrowserWindow.getFocusedWindow();

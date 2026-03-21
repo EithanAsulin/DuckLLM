@@ -20,7 +20,7 @@
       --bg: #08080a;
       --pill: rgba(255, 255, 255, 0.05);
       --border: rgba(255, 255, 255, 0.08);
-      --blue: #0066FF;
+      --blue: #015AE6;
       --green: #00FF88;
       --yellow: #FFD700;
       --red: #FF4B4B;
@@ -43,12 +43,29 @@
       overflow: hidden;
     }
 
+    /* Global Modern Scrollbar */
+    *::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    *::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    *::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.02);
+    }
+    *::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
     body::before {
       content: '';
       position: fixed;
       inset: 0;
       background:
-        radial-gradient(circle at 20% 20%, rgba(0, 102, 255, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 20% 20%, rgba(1, 90, 230, 0.15) 0%, transparent 40%),
         radial-gradient(circle at 80% 80%, rgba(0, 255, 136, 0.1) 0%, transparent 40%),
         radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0) 0%, rgba(8, 8, 10, 0.5) 100%);
       pointer-events: none;
@@ -89,9 +106,10 @@
     }
 
     #new-chat-btn {
+      width: 100%;
       background: var(--blue);
       color: #fff;
-      border: none;
+      border: 1px solid var(--blue);
       border-radius: 12px;
       padding: 14px;
       font-weight: 700;
@@ -104,13 +122,14 @@
       justify-content: center;
       gap: 10px;
       transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-      box-shadow: 0 8px 20px rgba(0, 102, 255, 0.2);
+      box-shadow: 0 4px 15px rgba(1, 90, 230, 0.2);
     }
 
     #new-chat-btn:hover {
       transform: translateY(-2px);
-      background: #005ae6;
-      box-shadow: 0 10px 25px rgba(0, 102, 255, 0.3);
+      background: #0166FF;
+      border-color: #0166FF;
+      box-shadow: 0 8px 25px rgba(1, 90, 230, 0.4);
     }
 
     #history-list {
@@ -146,9 +165,34 @@
     }
 
     .history-item.active {
-      background: rgba(0, 102, 255, 0.1);
-      border-color: rgba(0, 102, 255, 0.3);
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
       color: #fff;
+    }
+
+    .history-title {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin: 0 8px;
+    }
+
+    .del-chat {
+      opacity: 0;
+      color: #FF4B4B;
+      padding: 4px;
+      transition: all 0.2s;
+      font-size: 16px;
+    }
+
+    .history-item:hover .del-chat {
+      opacity: 0.6;
+    }
+
+    .del-chat:hover {
+      opacity: 1 !important;
+      transform: scale(1.2);
     }
 
     .model-select-wrap {
@@ -251,21 +295,22 @@
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
     #model-store-modal .modal-content {
-      background: rgba(15, 15, 18, 0.95);
+      background: rgba(15, 15, 18, 0.85);
       backdrop-filter: blur(40px) saturate(200%);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      -webkit-backdrop-filter: blur(40px) saturate(200%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       width: 100%;
-      max-width: 580px;
+      max-width: 600px;
       border-radius: 32px;
       padding: 0;
       overflow: hidden;
-      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8), 0 0 100px rgba(0, 102, 255, 0.1);
+      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8), 0 0 100px rgba(1, 90, 230, 0.05);
       transform: translateY(0);
-      animation: modalSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      animation: modalSlide 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     @keyframes modalSlide { 
-      from { opacity: 0; transform: translateY(30px) scale(0.98); } 
+      from { opacity: 0; transform: translateY(40px) scale(0.95); } 
       to { opacity: 1; transform: translateY(0) scale(1); } 
     }
 
@@ -287,9 +332,10 @@
     }
 
     .modal-subtitle {
-      font-size: 14px;
-      color: rgba(255, 255, 255, 0.5);
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.4);
       font-weight: 500;
+      letter-spacing: 0.5px;
     }
 
     .close-modal {
@@ -351,19 +397,22 @@
     }
 
     .download-btn {
-      background: linear-gradient(135deg, var(--blue), #0044CC);
+      background: linear-gradient(135deg, var(--blue), #0148B8);
       color: white;
       border: none;
+      padding: 12px 28px;
+      border-radius: 16px;
+      font-weight: 700;
+      font-size: 14px;
       cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 4px 15px rgba(0, 102, 255, 0.3);
-      flex-shrink: 0;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 15px rgba(1, 90, 230, 0.2);
     }
 
     .download-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(0, 102, 255, 0.4);
-      background: #3385ff;
+      box-shadow: 0 8px 25px rgba(1, 90, 230, 0.4);
+      filter: brightness(1.1);
     }
 
     .remove-btn {
@@ -409,16 +458,17 @@
     }
 
     .confirm-box {
-      background: rgba(20, 20, 25, 0.85);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 24px;
-      padding: 32px;
-      width: 400px;
+      background: rgba(15, 15, 20, 0.7);
+      backdrop-filter: blur(40px) saturate(180%);
+      -webkit-backdrop-filter: blur(40px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 32px;
+      padding: 40px;
+      width: 440px;
       max-width: 90%;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8), 0 0 80px rgba(255, 75, 75, 0.05);
       transform: scale(0.9) translateY(20px);
-      transition: all 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
       text-align: center;
     }
 
@@ -458,15 +508,16 @@
     }
 
     .confirm-btn.yes {
-      background: var(--blue);
+      background: linear-gradient(135deg, #FF4B4B, #D32F2F);
       color: #fff;
-      box-shadow: 0 4px 15px rgba(0, 102, 255, 0.3);
+      box-shadow: 0 8px 25px rgba(255, 75, 75, 0.3);
+      border: none;
     }
 
     .confirm-btn.yes:hover {
-      background: #3385ff;
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(0, 102, 255, 0.4);
+      box-shadow: 0 12px 35px rgba(255, 75, 75, 0.5);
+      filter: brightness(1.1);
     }
 
     .confirm-btn.no {
@@ -522,6 +573,37 @@
       transition: width 0.3s;
     }
 
+    /* --- Loading Spinner --- */
+    .spinner-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 20px;
+      gap: 20px;
+      color: var(--dim);
+      animation: fadeIn 0.4s ease-out;
+    }
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid rgba(255, 255, 255, 0.05);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      box-shadow: 0 0 30px rgba(1, 90, 230, 0.1);
+    }
+    @keyframes spin { 
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .loading-text {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
     .history-title {
       font-size: 13px;
       white-space: nowrap;
@@ -529,6 +611,8 @@
       text-overflow: ellipsis;
       flex: 1;
       color: rgba(255, 255, 255, 0.7);
+      text-align: start;
+      unicode-bidi: plaintext;
     }
 
     .history-item.active .history-title {
@@ -702,20 +786,23 @@
     }
 
     .msg-row.user .bubble {
-      background: linear-gradient(135deg, #1e293b, #020817);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: linear-gradient(145deg, #1e293b, #0f172a);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       color: #fff;
-      border-bottom-right-radius: 4px;
+      border-bottom-right-radius: 6px;
       margin-left: auto;
-      margin-right: 20px;
+      margin-right: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     }
 
     .msg-row.assistant .bubble {
-      background: var(--ai-bg);
-      backdrop-filter: var(--glass);
-      border: 1px solid var(--ai-bdr);
-      color: var(--text);
-      border-bottom-left-radius: 4px;
+      background: rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #f0f0f0;
+      border-bottom-left-radius: 6px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     }
 
     .msg-actions {
@@ -797,22 +884,63 @@
 
     #input-pill {
       width: 100%;
-      max-width: 700px;
-      background: rgba(255, 255, 255, 0.04);
-      backdrop-filter: blur(24px) saturate(180%);
+      max-width: 800px;
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 28px;
+      border-radius: 24px;
       padding: 8px 12px 8px 24px;
       display: flex;
       align-items: center;
+      gap: 12px;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    #send-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: none;
+      background: var(--blue);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      flex-shrink: 0;
+      box-shadow: 0 4px 15px rgba(1, 90, 230, 0.3);
+      margin-right: 4px;
+    }
+
+    #send-btn:hover {
+      background: #0166FF;
+      transform: scale(1.08);
+      box-shadow: 0 8px 25px rgba(1, 90, 230, 0.5);
+    }
+
+    #send-btn:active {
+      transform: scale(0.92);
+    }
+
+    #send-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transform: translateX(1px);
     }
 
     #input-pill:focus-within {
-      border-color: rgba(0, 102, 255, 0.5);
-      background: rgba(255, 255, 255, 0.07);
-      box-shadow: 0 10px 50px rgba(0, 102, 255, 0.2);
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(0, 102, 255, 0.3);
+      box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 102, 255, 0.1);
+      transform: translateY(-2px);
     }
 
     #input {
@@ -971,22 +1099,35 @@
       opacity: 1;
       color: #fff;
     }
+    #stop-btn {
+      width: 44px;
+      height: 44px;
+      background: rgba(255, 60, 60, 0.15);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 60, 60, 0.3);
+      border-radius: 14px;
+      color: #FF3C3C;
+      font-size: 18px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 15px rgba(255, 60, 60, 0.1);
+    }
+
+    #stop-btn:hover {
+      background: rgba(255, 60, 60, 0.25);
+      transform: scale(1.05);
+      border-color: rgba(255, 60, 60, 0.5);
+      box-shadow: 0 8px 25px rgba(255, 60, 60, 0.2);
+    }
   </style>
 </head>
 
 <body>
   <div id="main-wrap">
-    <!-- Custom Confirm Modal (God Mode: Interactive) -->
-    <div id="custom-confirm" class="confirm-overlay">
-      <div class="confirm-box">
-        <h2 id="confirm-title">Confirm Action</h2>
-        <p id="confirm-msg">Are you sure you want to proceed?</p>
-        <div class="confirm-btns">
-          <button class="confirm-btn no" onclick="resolveConfirm(false)">Cancel</button>
-          <button class="confirm-btn yes" id="confirm-yes-btn" onclick="resolveConfirm(true)">Confirm</button>
-        </div>
-      </div>
-    </div>
     <div id="sidebar">
       <div class="model-select-wrap">
         <label class="model-label" for="model-select">Selected Model</label>
@@ -1003,12 +1144,11 @@
     <button id="sidebar-toggle" onclick="toggleSidebar()">☰</button>
     <div id="app">
       <header>
-        <div class="logo-pill">
+        <div class="logo-pill" onclick="toggleUnfi()" style="cursor: pointer;">
           <div class="dot" id="dot"></div>
           <span class="logo-text" id="brand">DUCKLLM</span>
         </div>
         <div class="header-right">
-          <button onclick="exitApp()" class="pill-btn" style="color: var(--red); border-color: rgba(255, 75, 75, 0.2);">✕ Exit</button>
         </div>
       </header>
 
@@ -1029,7 +1169,10 @@
 
       <div id="input-area">
         <div id="input-pill">
-          <textarea id="input" placeholder="Ask DuckLLM..." rows="1"></textarea>
+          <textarea id="input" placeholder="Ask DuckLLM..." rows="1" dir="auto"></textarea>
+          <button id="send-btn" onclick="sendMsg()">
+            <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
+          </button>
         </div>
         <div id="plus-wrap">
           <div id="plus-menu">
@@ -1040,6 +1183,7 @@
               style="display:none" onchange="handleFile(this)">
           </div>
           <button id="plus-btn" onclick="toggleMenu()">+</button>
+          <button id="stop-btn" onclick="stopGen()">⏹</button>
         </div>
       </div>
     </div> <!-- End #app -->
@@ -1058,6 +1202,19 @@
     </div>
   </div>
 
+  <!-- Custom Confirm Overlay (God Mode: UI) -->
+  <div id="custom-confirm" class="confirm-overlay">
+    <div class="confirm-box">
+      <div style="font-size: 48px; margin-bottom: 20px; filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.3));">⚠️</div>
+      <h2 id="confirm-title" style="margin: 0 0 12px; font-size: 26px; font-weight: 800; color: #fff; letter-spacing: -1px;">Delete Chat?</h2>
+      <p id="confirm-msg" style="color: rgba(255,255,255,0.4); line-height: 1.6; font-size: 15px; margin-bottom: 32px; font-weight: 500;">This action is permanent and cannot be undone.</p>
+      <div class="confirm-btns">
+        <button id="confirm-no-btn" class="confirm-btn no" onclick="resolveConfirm(false)">Cancel</button>
+        <button id="confirm-yes-btn" class="confirm-btn yes" onclick="resolveConfirm(true)">Delete</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let chatHistory = [], busy = false, webMode = false, unfiMode = false;
     let pendingImageB64 = null, pendingFileText = null;
@@ -1069,9 +1226,10 @@
         const r = await fetch('http://localhost:17432/duckllm_settings.json');
         if (r.ok) { 
           const s = await r.json(); 
-          webMode = s.web_mode || false; 
-          unfiMode = s.unfiltered_mode || false; 
-          selectedModel = s.selected_model || (unfiMode ? 'DuckLLM_Unfiltered:latest' : 'DuckLLM:latest');
+          // Force clean startup for privacy (Always OFF)
+          webMode = false; 
+          unfiMode = false; 
+          selectedModel = s.selected_model || 'DuckLLM:latest';
           syncUI(); 
         }
       } catch (e) { console.warn('Settings load failed:', e); }
@@ -1079,19 +1237,14 @@
       await fetchModels();
       
       try {
-        await loadHistory();
-        if (!currentChatId) {
+        const latestId = await loadHistory();
+        if (latestId) {
+          await switchChat(latestId);
+        } else {
           await newChat();
         }
       } catch (e) { console.error('Initial load failed:', e); }
     })();
-
-    async function exitApp() {
-      if (confirm('Close DuckLLM?')) {
-        await fetch('http://localhost:17432/exit');
-        window.close();
-      }
-    }
 
     async function loadHistory() {
       const resp = await fetch('http://localhost:17432/list-chats');
@@ -1099,9 +1252,10 @@
         const chats = await resp.json();
         const list = document.getElementById('history-list');
         list.innerHTML = '';
-        chats.reverse().forEach(c => {
+        chats.forEach(c => { // No reverse, server sorts them
           const item = document.createElement('div');
           item.dataset.id = c.id;
+          item.dir = 'auto'; // This flips the entire item layout (X <-> Title)
           item.className = 'history-item' + (c.id === currentChatId ? ' active' : '');
           item.onclick = (e) => {
             if (e.target.classList.contains('del-chat')) return;
@@ -1109,15 +1263,26 @@
           };
           item.innerHTML = `
             <span class="history-title">${c.title || 'New Chat'}</span>
-            <span class="del-chat" onclick="deleteChat('${c.id}')">✕</span>
+            <span class="del-chat" onclick="event.stopPropagation(); deleteChat('${c.id}')">✕</span>
           `;
           list.appendChild(item);
         });
+        return chats[0] ? chats[0].id : null;
+      }
+      return null;
+    }
+
+    async function deleteChat(id) {
+      const confirmed = await showConfirm('Delete Chat', 'Are you sure you want to permanently delete this conversation?', 'Delete');
+      if (confirmed) {
+        await fetch(`http://localhost:17432/delete-chat?id=${encodeURIComponent(id)}`);
+        if (id === currentChatId) newChat();
+        loadHistory();
       }
     }
 
     async function newChat() {
-      currentChatId = btoa(Date.now() + Math.random().toString()).slice(0, 12);
+      currentChatId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
       chatHistory = [];
       const chat = document.getElementById('chat');
       chat.innerHTML = `
@@ -1137,10 +1302,22 @@
       if (busy) return;
       currentChatId = id;
       showThink('Loading');
-      const resp = await fetch(`http://localhost:17432/load-chat?id=${id}`);
+      const resp = await fetch(`http://localhost:17432/load-chat?id=${encodeURIComponent(id)}`);
       hideThink();
       if (resp.ok) {
-        chatHistory = await resp.json();
+        const data = await resp.json();
+        console.log('Chat loaded:', id, data);
+        if (Array.isArray(data)) {
+          chatHistory = data;
+          unfiMode = false; 
+          webMode = false;
+        } else {
+          chatHistory = data.messages || [];
+          unfiMode = !!data.unfiltered;
+          webMode = !!data.web;
+        }
+        syncUI();
+        
         const chat = document.getElementById('chat');
         chat.innerHTML = `
           <div id="thinking" style="display:none">
@@ -1157,16 +1334,6 @@
         });
         updateHistoryUI();
         scrollEnd();
-      }
-    }
-
-    async function deleteChat(id) {
-      if (confirm('Delete this chat?')) {
-        await fetch(`http://localhost:17432/delete-chat?id=${id}`, { method: 'POST' });
-        if (currentChatId === id) {
-          await newChat();
-        }
-        await loadHistory();
       }
     }
 
@@ -1224,10 +1391,13 @@
       const x = [];
       if (webMode) x.push('WEB');
       if (unfiMode) x.push('UNFILTERED');
-      document.getElementById('brand').textContent = x.length ? `DUCKLLM [${x.join(' ')}]` : 'DUCKLLM';
+      
+      const status = busy ? "Thinking..." : "READY";
+      const suffix = x.length ? ` [${x.join(' ')}]` : "";
+      document.getElementById('brand').textContent = `DUCKLLM - ${status}${suffix}`;
     }
-    function toggleWeb() { webMode = !webMode; syncUI(); saveSettings(); }
-    function toggleUnfi() { unfiMode = !unfiMode; syncUI(); saveSettings(); }
+    function toggleWeb() { webMode = !webMode; syncUI(); saveSettings(); saveChat(); }
+    function toggleUnfi() { unfiMode = !unfiMode; syncUI(); saveSettings(); saveChat(); }
 
     function saveSettings() {
       fetch('http://localhost:17432/save-settings', {
@@ -1249,6 +1419,14 @@
 
     async function loadDynamicModels() {
       const list = document.getElementById('model-store-list');
+      // Show loading spinner immediately (UX God Mode: Feedback)
+      list.innerHTML = `
+        <div class="spinner-wrap">
+          <div class="spinner"></div>
+          <div class="loading-text">Accessing Model Vault...</div>
+        </div>
+      `;
+      
       try {
         // Fetch installed models to cross-reference (Python God Mode: Precision)
         const tagsResp = await fetch('http://localhost:17432/api/tags');
@@ -1259,6 +1437,12 @@
         const models = await resp.json();
         list.innerHTML = '';
         
+        if (!Array.isArray(models)) {
+          console.error('Expected array from HF, got:', models);
+          list.innerHTML = `<div style="text-align: center; padding: 40px; color: #ff4444;">No models found or error from Hugging Face.</div>`;
+          return;
+        }
+
         models.forEach(m => {
           if (!m.id.includes('GGUF')) return;
           
@@ -1284,7 +1468,7 @@
           card.innerHTML = `
             <div class="model-info">
               <h3>${cleanName}</h3>
-              <p>Official DuckLLM Project Model • ${new Date(m.createdAt).toLocaleDateString()}</p>
+              <p>Official DuckLLM Project Model • ${new Date(m.lastModified || m.createdAt).toLocaleDateString()}</p>
             </div>
             ${actionHtml}
             <div class="progress-container" id="prog-cont-${key}">
@@ -1376,10 +1560,11 @@
           if (state.status === 'downloading') {
             bar.style.width = `${state.progress}%`;
             btn.textContent = `Downloading ${state.progress}%`;
-          } else if (state.status === 'creating') {
+          } else if (state.status === 'creating' || state.status === 'finalizing') {
             bar.style.width = '100%';
-            bar.style.background = '#FFCC00';
-            btn.textContent = 'Creating Model...';
+            bar.style.background = '#FFD700';
+            bar.style.boxShadow = '0 0 15px rgba(255, 215, 0, 0.4)';
+            btn.textContent = 'Finalizing & Verifying...';
           } else if (state.status === 'done') {
             clearInterval(timer);
             btn.textContent = 'Installed';
@@ -1488,7 +1673,12 @@
     function scrollEnd() { const c = document.getElementById('chat'); c.scrollTop = c.scrollHeight; }
     function saveChat() {
       if (!currentChatId) return;
-      fetch(`http://localhost:17432/save-chat?id=${currentChatId}`, { method: 'POST', body: JSON.stringify(chatHistory) });
+      const data = {
+        messages: chatHistory,
+        unfiltered: unfiMode,
+        web: webMode
+      };
+      fetch(`http://localhost:17432/save-chat?id=${encodeURIComponent(currentChatId)}`, { method: 'POST', body: JSON.stringify(data) });
     }
 
     async function fetchModels() {
@@ -1653,6 +1843,7 @@
       const q = inp.value.trim();
       if (!q || busy) return;
       busy = true;
+      syncUI(); 
       inp.value = ''; inp.style.height = 'auto';
       inp.disabled = true;
       setDot('#FFCC00');
@@ -1662,6 +1853,7 @@
       if (imgB64 || fileText) clearAttach();
       webMode ? await doWeb(q) : await doChat(q, imgB64, fileText);
       busy = false;
+      syncUI(); 
       inp.disabled = false;
       inp.focus();
       setDot('#00FF88');
@@ -1673,7 +1865,7 @@
       const userMsg = { role: 'user', content };
       if (imgB64) userMsg.images = [imgB64];
       chatHistory.push(userMsg);
-      const model = selectedModel;
+      const model = unfiMode ? "DuckLLM_Unfiltered:latest" : selectedModel;
       try {
         const res = await fetch('http://localhost:17432/api/chat', { 
           method: 'POST', 
@@ -1689,6 +1881,7 @@
             }
           }) 
         });
+        document.getElementById('stop-btn').style.display = 'flex';
         hideThink(); setDot('#00CCFF');
         const { bub, p, cur } = streamBubble();
         const reader = res.body.getReader(), dec = new TextDecoder();
@@ -1736,12 +1929,15 @@
           chatHistoryLength: chatHistory.length,
           model: model
         });
+      } finally {
+        busy = false;
+        document.getElementById('stop-btn').style.display = 'none';
       }
     }
 
     async function doWeb(q) {
       showThink('Searching');
-      const model = selectedModel;
+      const model = unfiMode ? "DuckLLM_Unfiltered:latest" : selectedModel;
       let context = '', sources = [];
       try {
         const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://html.duckduckgo.com/html/?q=' + encodeURIComponent(q))}`);
@@ -1752,6 +1948,7 @@
       if (!context) context = 'No results found.';
       try {
         const res = await fetch('http://localhost:17432/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model, prompt: `Respond in the same language as the query. Answer concisely.\n\nContext: ${context}\n\nQuestion: ${q}`, stream: true }) });
+        document.getElementById('stop-btn').style.display = 'flex';
         hideThink(); setDot('#00CCFF');
         const { bub, p, cur } = streamBubble();
         const reader = res.body.getReader(), dec = new TextDecoder();
@@ -1779,7 +1976,13 @@
         chatHistory.push({ role: 'assistant', content: full });
         saveChat();
         scrollEnd();
-      } catch (e) { hideThink(); addBubble('assistant', `Search error: ${e.message}`); }
+      } catch (e) { 
+        hideThink(); 
+        addBubble('assistant', `Search error: ${e.message}`); 
+      } finally {
+        busy = false;
+        document.getElementById('stop-btn').style.display = 'none';
+      }
     }
     // Promise-based Custom Confirm (God Mode: Logic)
     let confirmResolver = null;
@@ -1790,8 +1993,8 @@
         document.getElementById('confirm-msg').innerText = msg;
         document.getElementById('confirm-yes-btn').innerText = yesText;
         
-        const noBtn = overlay.querySelector('.confirm-btn.no');
-        noBtn.style.display = isAlert ? 'none' : 'block';
+        const noBtn = document.getElementById('confirm-no-btn');
+        if (noBtn) noBtn.style.display = isAlert ? 'none' : 'block';
 
         overlay.classList.add('on');
         confirmResolver = resolve;
@@ -1805,6 +2008,13 @@
         confirmResolver(val);
         confirmResolver = null;
       }
+    }
+    async function stopGen() {
+      try {
+        await fetch('http://localhost:17432/api/stop-gen', { method: 'POST' });
+        document.getElementById('stop-btn').style.display = 'none';
+        document.getElementById('think-lbl').textContent = 'Stopping...';
+      } catch (e) { console.error('Stop failed', e); }
     }
   </script>
 </body>

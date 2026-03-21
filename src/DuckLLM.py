@@ -13,9 +13,9 @@ import random
 import ctypes
 import platform
 import time
-import socket
 import socketserver
 import http.server
+import signal
 from PySide6.QtCore import Qt, QTimer, QRectF, Signal, QObject, QSize
 from PySide6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QPushButton,
@@ -30,6 +30,316 @@ _download_progress = {}
 
 if "WAYLAND_DISPLAY" in os.environ:
     os.environ["QT_QPA_PLATFORM"] = "wayland"
+
+
+def get_ollama_cmd(script_dir):
+    """Cross-platform Ollama binary discovery."""
+    if platform.system() == "Windows":
+        paths = [
+            os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "Ollama", "ollama.exe"),
+            "C:\\Program Files\\Ollama\\ollama.exe",
+            "ollama.exe"
+        ]
+        for p in paths:
+            if os.path.exists(p) or p == "ollama.exe":
+                return p if " " not in p else f'"{p}"'
+    else: # MacOS / Linux
+        paths = ["/usr/local/bin/ollama", "/usr/bin/ollama", "ollama"]
+        for p in paths:
+            if os.path.exists(p) or p == "ollama":
+                return p
+    return "ollama"
+
+
+def get_user_data_dir():
+    """Returns the platform-specific user data directory."""
+    app_name = "DuckLLM"
+    home = os.path.expanduser("~")
+    if platform.system() == "Windows":
+        # %LOCALAPPDATA%/DuckLLM
+        return os.path.join(os.environ.get("LOCALAPPDATA", home), app_name)
+    elif platform.system() == "Darwin":
+        # ~/Library/Application Support/DuckLLM
+        return os.path.join(home, "Library", "Application Support", app_name)
+    else: # Linux/Unix
+        # ~/.local/share/DuckLLM
+        return os.path.join(home, ".local", "share", app_name)
+
+
+def start_local_server(script_dir, data_dir, port=17432):
+    """Starts the background server for Fullscreen mode."""
+    ollama_cmd = get_ollama_cmd(script_dir)
+
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        def log_message(self, format, *args):
+            pass
+
+        def do_GET(self):
+            clean_path = self.path.split("?")[0]
+            # Silencing noisy progress/tags checks
+            if clean_path not in ("/api/download-progress", "/api/tags", "/duckllm_settings.json"):
+                print(f"Server GET: {clean_path}")
+            json_files = {
+                "/duckllm_chat.json": "duckllm_chat.json",
+                "/load": "duckllm_chat.json",
+                "/duckllm_settings.json": "duckllm_settings.json",
+                "/load-settings": "duckllm_settings.json"
+            }
+            
+            if clean_path == "/":
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(b"DUCKLLM SERVER V2")
+                return
+
+            if clean_path == "/list-chats":
+                chats_root = os.path.join(data_dir, "chats")
+                os.makedirs(chats_root, exist_ok=True)
+                raw_list = []
+                for root, _, files in os.walk(chats_root):
+                    for f in files:
+                        if f.endswith(".json"):
+                            p = os.path.join(root, f)
+                            try:
+                                mtime = os.path.getmtime(p)
+                                with open(p, "r", encoding="utf-8") as fin:
+                                    data = json.load(fin)
+                                    msgs = data if isinstance(data, list) else data.get("messages", [])
+                                    fc = msgs[0].get("content", "New Chat") if msgs else "New Chat"
+                                    title = (fc[:30] + '...') if len(fc) > 30 else fc
+                                    raw_list.append({"id": f.replace(".json", ""), "title": title, "time": mtime})
+                            except Exception:
+                                pass
+                
+                # Sort by time descending
+                raw_list.sort(key=lambda x: x['time'], reverse=True)
+                chat_list = [{"id": x['id'], "title": x['title']} for x in raw_list]
+                
+                print(f"List-chats: found {len(chat_list)} chats")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(json.dumps(chat_list).encode())
+            elif clean_path == "/exit":
+                self.send_response(200)
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(b'{"status": "quitting"}')
+                QApplication.quit()
+            elif clean_path == "/load-chat":
+                cid = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("id", [""])[0]
+                print(f"Loading chat: {cid}")
+                found = False
+                chats_root = os.path.join(data_dir, "chats")
+                for root, _, files in os.walk(chats_root):
+                    if f"{cid}.json" in files:
+                        with open(os.path.join(root, f"{cid}.json"), "rb") as fchat:
+                            self.send_response(200)
+                            self.send_header("Access-Control-Allow-Origin", "*")
+                            self.send_header("Content-Type", "application/json")
+                            self.end_headers()
+                            self.wfile.write(fchat.read())
+                            found = True
+                            break
+                if not found:
+                    self.send_response(404)
+                    self.end_headers()
+            elif clean_path == "/delete-chat":
+                print(f"DuckLLM: Delete request for {self.path}")
+                cid = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("id", [""])[0]
+                chats_root = os.path.join(data_dir, "chats")
+                deleted = False
+                for root, _, files in os.walk(chats_root):
+                    if f"{cid}.json" in files:
+                        os.remove(os.path.join(root, f"{cid}.json"))
+                        print(f"DuckLLM: Deleted chat file {cid}.json")
+                        deleted = True
+                        break
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(json.dumps({"deleted": deleted}).encode())
+                return
+            elif clean_path == "/api/tags":
+                try:
+                    resp = requests.get("http://localhost:11434/api/tags", timeout=5)
+                    self.send_response(resp.status_code)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.end_headers()
+                    self.wfile.write(resp.content)
+                except Exception:
+                    self.send_response(502)
+                    self.end_headers()
+            elif clean_path == "/api/list-duck-models":
+                try:
+                    print("DuckLLM: Fetching models from Hugging Face...")
+                    url = "https://huggingface.co/api/models?search=DuckLLM&author=DuckLLM&expand[]=lastModified"
+                    resp = requests.get(url, timeout=10)
+                    print(f"DuckLLM: HF Status: {resp.status_code}")
+                    if resp.ok:
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/json")
+                        self.send_header("Access-Control-Allow-Origin", "*")
+                        self.end_headers()
+                        self.wfile.write(resp.content)
+                        print(f"DuckLLM: Sent {len(resp.json())} models to client")
+                    else:
+                        print(f"DuckLLM: HF Error - {resp.text}")
+                        self.send_error(resp.status_code, "HF API Error")
+                except Exception as e:
+                    print(f"DuckLLM: Exception fetching models: {e}")
+                    self.send_error(500, str(e))
+                return
+            elif clean_path == "/api/download-progress":
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(json.dumps(_download_progress).encode())
+            elif clean_path in json_files:
+                filepath = os.path.join(data_dir, json_files[clean_path])
+                data = b"[]"
+                if os.path.exists(filepath):
+                    with open(filepath, "rb") as f:
+                        data = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(data)
+            else:
+                # Map specific paths to script_dir for static files if needed
+                if clean_path in ("/fullscreen.html", "/logo.png", "/Attachment.png", "/Web.png", "/Unfiltered.png"):
+                    full_path = os.path.join(script_dir, clean_path[1:])
+                    if os.path.exists(full_path):
+                        self.send_response(200)
+                        self.send_header("Access-Control-Allow-Origin", "*")
+                        if full_path.endswith(".html"):
+                            self.send_header("Content-Type", "text/html")
+                        elif full_path.endswith(".png"):
+                            self.send_header("Content-Type", "image/png")
+                        self.end_headers()
+                        with open(full_path, "rb") as f:
+                            self.wfile.write(f.read())
+                        return
+                super(Handler, self).do_GET()
+
+        def do_POST(self):
+            print(f"Server POST: {self.path}")
+            clean_path = self.path.split("?")[0]
+            body_len = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(body_len) if body_len > 0 else b""
+            
+            if clean_path == "/save-chat":
+                cid = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("id", [""])[0]
+                now = time.localtime()
+                save_dir = os.path.join(data_dir, "chats", time.strftime("%Y/%m/%d", now))
+                os.makedirs(save_dir, exist_ok=True)
+                with open(os.path.join(save_dir, f"{cid}.json"), 'wb') as f:
+                    f.write(body)
+                self.send_response(200)
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+            elif clean_path == "/delete-chat":
+                cid = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("id", [""])[0]
+                chats_root = os.path.join(data_dir, "chats")
+                for root, _, files in os.walk(chats_root):
+                    if f"{cid}.json" in files:
+                        os.remove(os.path.join(root, f"{cid}.json"))
+                        break
+                self.send_response(200)
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+            elif clean_path == "/api/delete-model":
+                name = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("name", [""])[0]
+                if name:
+                    import subprocess
+                    subprocess.run(f"{ollama_cmd} rm {name}", shell=True)
+                self.send_response(200)
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+            elif clean_path == "/api/download-duck":
+                data = json.loads(body)
+                def download(m_key, repo, filename):
+                    try:
+                        _download_progress[m_key] = {"status": "downloading", "progress": 0}
+                        mdir = os.path.join(data_dir, "models")
+                        os.makedirs(mdir, exist_ok=True)
+                        l_path = os.path.join(mdir, f"DuckLLM-{m_key}.gguf")
+                        url = f"https://huggingface.co/{repo}/resolve/main/{filename}"
+                        with requests.get(url, stream=True) as r:
+                            t_size = int(r.headers.get('content-length', 0))
+                            d_size = 0
+                            with open(l_path, 'wb') as f:
+                                for ch in r.iter_content(8192):
+                                    f.write(ch)
+                                    d_size += len(ch)
+                                    if t_size > 0:
+                                        _download_progress[m_key]["progress"] = int((d_size/t_size)*100)
+                        _download_progress[m_key] = {"status": "finalizing", "progress": 100}
+                        mfile = os.path.join(mdir, f"Modelfile-{m_key}")
+                        with open(mfile, "w") as f:
+                            f.write(f"FROM {l_path}\n")
+                        import subprocess
+                        subprocess.run(f"{ollama_cmd} create DuckLLM-{m_key}:latest -f \"{mfile}\"", shell=True)
+                        _download_progress[m_key] = {"status": "done", "progress": 100}
+                        print(f"DuckLLM: Model {m_key} is ready!")
+                    except Exception as e:
+                        _download_progress[m_key] = {"status": "error", "message": str(e)}
+                threading.Thread(
+                    target=download,
+                    args=(data.get("model_key"), data.get("repo"), data.get("filename")),
+                    daemon=True
+                ).start()
+                self.send_response(200)
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(b'{"status":"started"}')
+            elif clean_path == "/api/stop-gen":
+                # Static access to the last created DuckLLM instance for web control
+                global duck_llm_instance
+                if 'duck_llm_instance' in globals():
+                    duck_llm_instance.stop_generation()
+                self.send_response(200)
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(b'{"status":"stopped"}')
+            elif clean_path in ("/api/chat", "/api/generate"):
+                try:
+                    resp = requests.post(f"http://localhost:11434{self.path}", data=body, stream=True)
+                    self.send_response(resp.status_code)
+                    for k, v in resp.headers.items():
+                        if k.lower() not in ("content-length", "transfer-encoding"):
+                            self.send_header(k, v)
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.end_headers()
+                    for chunk in resp.iter_content(1024): 
+                        if chunk:
+                            self.wfile.write(chunk)
+                            self.wfile.flush()
+                except Exception:
+                    pass
+            else:
+                self.send_response(200)
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+
+    def serve():
+        socketserver.TCPServer.allow_reuse_address = True
+        try:
+            with socketserver.TCPServer(("127.0.0.1", port), Handler) as httpd:
+                print(f"DuckLLM Server: Listening on http://localhost:{port}")
+                httpd.serve_forever()
+        except Exception as e:
+            print(f"DuckLLM Server: FAILED TO START on port {port}: {e}")
+            print("Suggestion: Make sure no other instance of DuckLLM is running.")
+
+    threading.Thread(target=serve, daemon=True).start()
 
 
 class CodeBlock(QFrame):
@@ -67,7 +377,7 @@ class CodeBlock(QFrame):
         dl_btn.setStyleSheet("""
             QPushButton { background: #2a2a2a; color: #aaa; border: none; border-radius: 4px;
                           font-size: 11px; padding: 0 10px; }
-            QPushButton:hover { background: #0040FF; color: white; }
+            QPushButton:hover { background: #015AE6; color: white; }
         """)
         dl_btn.clicked.connect(self.download_code)
 
@@ -138,24 +448,33 @@ class ChatMessageWidget(QFrame):
                 layout.addWidget(CodeBlock(content, lang))
             else:
                 if content.strip():
-                    lbl = QLabel()
-                    lbl.setTextFormat(Qt.MarkdownText)
-                    formatted = content.strip().replace("\n", "  \n")
-                    lbl.setText(formatted)
-                    lbl.setWordWrap(True)
-                    lbl.setTextInteractionFlags(Qt.TextSelectableByMouse)
+                    txt = QTextEdit()
+                    txt.setReadOnly(True)
+                    txt.setMarkdown(content.strip().replace("\n", "  \n"))
+                    txt.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+                    txt.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+                    txt.setFrameShape(QFrame.NoFrame)
+                    txt.setTextInteractionFlags(Qt.TextSelectableByMouse | Qt.TextSelectableByKeyboard)
                     
-                    if any('\u0590' <= c <= '\u05FF' for c in content):
-                        formatted += "\u200F"
-                        lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-                        lbl.setLayoutDirection(Qt.RightToLeft)
+                    is_rtl = any('\u0590' <= c <= '\u05FF' for c in content)
+                    opt = txt.document().defaultTextOption()
+                    if is_rtl:
+                        txt.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                        opt.setTextDirection(Qt.RightToLeft)
                     else:
-                        lbl.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-                        lbl.setLayoutDirection(Qt.LeftToRight)
+                        txt.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                        opt.setTextDirection(Qt.LeftToRight)
+                    txt.document().setDefaultTextOption(opt)
 
                     color = "#CCC" if role == "assistant" else "#aaddff"
-                    lbl.setStyleSheet(f"color: {color}; font-size: 16px; line-height: 1.6; background: transparent;")
-                    layout.addWidget(lbl)
+                    txt.setStyleSheet(f"color: {color}; font-size: 16px; background: transparent; border: none;")
+                    
+                    # Auto-adjust height logic
+                    doc = txt.document()
+                    doc.setTextWidth(900 - 40) # Sidebar offset / padding
+                    txt.setFixedHeight(int(doc.size().height()) + 10)
+                    
+                    layout.addWidget(txt)
 
     def _parse_segments(self, text):
         segments = []
@@ -182,7 +501,28 @@ class DuckLLM(QWidget):
     def __init__(self):
         super().__init__()
         self.script_dir = os.path.dirname(os.path.abspath(__file__))
-        self.data_dir = os.path.join(self.script_dir, "data")
+        self.data_dir = get_user_data_dir()
+        
+        # Hardened Migration: Merge history from old src/data into new data_dir
+        old_data_dir = os.path.join(self.script_dir, "data")
+        if os.path.exists(old_data_dir):
+            os.makedirs(self.data_dir, exist_ok=True)
+            import shutil
+            for item in os.listdir(old_data_dir):
+                s, d = os.path.join(old_data_dir, item), os.path.join(self.data_dir, item)
+                try:
+                    if os.path.isdir(s):
+                        if not os.path.exists(d) or not os.listdir(d):
+                            shutil.copytree(s, d, dirs_exist_ok=True)
+                            print(f"DuckLLM: Migrated folder {item}")
+                    elif not os.path.exists(d):
+                        shutil.copy2(s, d)
+                        print(f"DuckLLM: Migrated file {item}")
+                except Exception as e:
+                    print(f"Migration error ({item}): {e}")
+        
+        os.makedirs(self.data_dir, exist_ok=True)
+        
         os.makedirs(self.data_dir, exist_ok=True)
 
         logo_path = os.path.join(self.script_dir, "logo.png")
@@ -207,6 +547,7 @@ class DuckLLM(QWidget):
         self.target_w, self.target_h = self._curr_w, self._curr_h
         
         self.is_thinking = False
+        self.abort_flag = False
         self.has_content = False
         self.expand_direction = "down"
         self.pending_images = []
@@ -242,26 +583,10 @@ class DuckLLM(QWidget):
         
         screen_geo = QApplication.primaryScreen().geometry()
         self.setGeometry(screen_geo)
-        self.pivot_logic()
-
-    def get_ollama_cmd(self):
-        """Cross-platform Ollama binary discovery."""
-        if platform.system() == "Windows":
-            paths = [
-                os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "Ollama", "ollama.exe"),
-                "C:\\Program Files\\Ollama\\ollama.exe",
-                "ollama.exe"
-            ]
-            for p in paths:
-                if os.path.exists(p) or p == "ollama.exe":
-                    return p if " " not in p else f'"{p}"'
-        else: # MacOS / Linux
-            paths = ["/usr/local/bin/ollama", "/usr/bin/ollama", "ollama"]
-            for p in paths:
-                if os.path.exists(p) or p == "ollama":
-                    return p
-        return "ollama"
-
+        
+        # Start background server
+        start_local_server(self.script_dir, self.data_dir)
+        
     def eventFilter(self, obj, event):
         if obj is self.input_field and event.type() == event.Type.KeyPress:
             if event.key() in (Qt.Key_Return, Qt.Key_Enter) and not (event.modifiers() & Qt.ShiftModifier):
@@ -270,11 +595,67 @@ class DuckLLM(QWidget):
         return super().eventFilter(obj, event)
 
     def _on_input_changed(self):
-        doc_height = self.input_field.document().size().height()
-        new_height = min(max(int(doc_height) + 12, 44), 120)
-        self.input_field.setFixedHeight(new_height)
-        if not self.has_content:
-            self.expand_ui()
+        try:
+            text = self.input_field.toPlainText()
+            if not text: 
+                if hasattr(self, "_last_dir"):
+                    delattr(self, "_last_dir")
+                return
+
+            first_strong = ""
+            for char in text:
+                if char.isalnum():
+                    first_strong = char
+                    break
+            
+            # PLATFORM-AWARE BIDI:
+            # On user's mirrored Windows, LTR commands yield RTL visual.
+            # On Linux/MacOS, standard BiDi logic applies.
+            is_rtl = '\u0590' <= first_strong <= '\u05FF'
+            
+            if sys.platform == "win32":
+                # User's Windows is mirrored: LTR visually is RTL
+                new_dir = Qt.LeftToRight if is_rtl else Qt.RightToLeft
+            else:
+                # Standard Platforms: Hebrew is RTL
+                new_dir = Qt.RightToLeft if is_rtl else Qt.LeftToRight
+            
+            if not hasattr(self, '_last_dir') or self._last_dir != new_dir:
+                self._last_dir = new_dir
+                self._apply_direction()
+                
+            doc_height = self.input_field.document().size().height()
+            new_height = min(max(int(doc_height) + 12, 44), 120)
+            self.input_field.setFixedHeight(new_height)
+            if not self.has_content:
+                self.expand_ui()
+        except Exception as e:
+            print(f"DEBUG Logic Error: {e}")
+
+    def _apply_direction(self):
+        """Inverted logic to match user's mirrored environment."""
+        try:
+            # Applying LTR when Hebrew is detected because user's machine mirrors it to Right
+            direction = self._last_dir # This is already LTR if is_rtl
+            alignment = (Qt.AlignLeft | Qt.AlignVCenter) if (direction == Qt.LeftToRight) else (Qt.AlignRight | Qt.AlignVCenter)
+
+            self.input_field.blockSignals(True)
+            self.input_field.setLayoutDirection(direction)
+            self.input_field.setAlignment(alignment)
+            
+            doc = self.input_field.document()
+            opt = doc.defaultTextOption()
+            opt.setTextDirection(direction)
+            opt.setAlignment(alignment)
+            doc.setDefaultTextOption(opt)
+            
+            self.input_field.blockSignals(False)
+            self.input_field.viewport().update()
+            print(f"DEBUG: Logic inversion applied ({'LTR-as-RTL' if direction == Qt.LeftToRight else 'RTL-as-LTR'})")
+        except Exception as e:
+            print(f"DEBUG Alignment Error: {e}")
+            if hasattr(self, 'input_field'):
+                self.input_field.blockSignals(False)
 
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key_Escape:
@@ -300,6 +681,7 @@ class DuckLLM(QWidget):
             user32.UnregisterHotKey(None, HOTKEY_ID)
 
     def _on_show_requested(self):
+        self.show()
         self.activateWindow()
         self.raise_()
         self.expand_ui()
@@ -309,9 +691,8 @@ class DuckLLM(QWidget):
         if os.path.exists(self.settings_file):
             try:
                 with open(self.settings_file, 'r') as f:
-                    data = json.load(f)
-                    self.web_mode = data.get('web_mode', False)
-                    self.unfiltered_mode = data.get('unfiltered_mode', False)
+                    json.load(f)
+                    # We no longer load web/unfiltered modes to start fresh each session
             except Exception:
                 pass
         self.save_settings()
@@ -319,7 +700,8 @@ class DuckLLM(QWidget):
     def save_settings(self):
         try:
             with open(self.settings_file, 'w') as f:
-                json.dump({"web_mode": self.web_mode, "unfiltered_mode": self.unfiltered_mode}, f, indent=2)
+                # We only save an empty or basic config, not the session modes
+                json.dump({}, f, indent=2)
         except Exception:
             pass
 
@@ -347,7 +729,7 @@ class DuckLLM(QWidget):
             self.logo_label.setPixmap(pix)
         else:
             self.logo_label.setFixedSize(24, 24)
-            self.logo_label.setStyleSheet("background: #0066FF; border-radius: 12px;")
+            self.logo_label.setStyleSheet("background: #015AE6; border-radius: 12px;")
             
         self.label = QLabel("DUCKLLM")
         self.label.setStyleSheet("color: #666; font-weight: 800; font-size: 11px; letter-spacing: 4px;")
@@ -372,6 +754,17 @@ class DuckLLM(QWidget):
         """)
         self.close_btn.clicked.connect(QApplication.quit)
         self.header.addWidget(self.close_btn)
+
+        self.stop_btn = QPushButton("STOP 🛑")
+        self.stop_btn.setFixedSize(80, 30)
+        self.stop_btn.setCursor(Qt.PointingHandCursor)
+        self.stop_btn.hide()
+        self.stop_btn.setStyleSheet("""
+            QPushButton { background: #FF4444; color: white; border-radius: 15px; font-weight: bold; font-size: 11px; }
+            QPushButton:hover { background: #CC0000; }
+        """)
+        self.stop_btn.clicked.connect(self.stop_generation)
+        self.header.insertWidget(4, self.stop_btn) # Insert before close_btn
 
         self.preview_frame = QFrame()
         self.preview_frame.hide()
@@ -416,14 +809,14 @@ class DuckLLM(QWidget):
         self._current_stream = ""
 
         btn_size = QSize(55, 55)
-        btn_style_base = "background: #080808; border-radius: 27px; color: #666; font-size: 18px;"
+        btn_style_base = "background: #080808; border-radius: 27px; color: #666; font-size: 28px;"
         
         self.file_btn = QPushButton(self)
         self.file_btn.setFixedSize(btn_size)
         self.file_btn.hide()
         self.file_btn.clicked.connect(self.handle_file_dialog)
         self.file_btn.setIcon(QIcon(os.path.join(self.script_dir, "Attachment.png")))
-        self.file_btn.setIconSize(QSize(28, 28))
+        self.file_btn.setIconSize(QSize(40, 40))
         self.file_btn.setStyleSheet(btn_style_base)
         
         self.web_btn = QPushButton(self)
@@ -431,7 +824,7 @@ class DuckLLM(QWidget):
         self.web_btn.hide()
         self.web_btn.clicked.connect(self.toggle_web_mode)
         self.web_btn.setIcon(QIcon(os.path.join(self.script_dir, "Web.png")))
-        self.web_btn.setIconSize(QSize(28, 28))
+        self.web_btn.setIconSize(QSize(40, 40))
         self.web_btn.setStyleSheet(btn_style_base)
         
         self.unfiltered_btn = QPushButton(self)
@@ -439,30 +832,33 @@ class DuckLLM(QWidget):
         self.unfiltered_btn.hide()
         self.unfiltered_btn.clicked.connect(self.toggle_unfiltered_mode)
         self.unfiltered_btn.setIcon(QIcon(os.path.join(self.script_dir, "Unfiltered.png")))
-        self.unfiltered_btn.setIconSize(QSize(28, 28))
+        self.unfiltered_btn.setIconSize(QSize(40, 40))
         self.unfiltered_btn.setStyleSheet(btn_style_base)
-
+ 
         self.fullscreen_btn = QPushButton(self)
         self.fullscreen_btn.setFixedSize(btn_size)
         self.fullscreen_btn.hide()
         self.fullscreen_btn.clicked.connect(self.open_fullscreen)
         self.fullscreen_btn.setText("⛶")
         self.fullscreen_btn.setStyleSheet(btn_style_base)
-
+ 
         self.update_mode_styles()
-
+ 
     def update_mode_styles(self):
-        web_border = "2px solid #0040FF" if self.web_mode else "none"
-        self.web_btn.setStyleSheet(f"background: #080808; border: {web_border}; border-radius: 27px; color: #666; font-size: 18px;")
+        web_border = "2px solid #015AE6" if self.web_mode else "none"
+        self.web_btn.setStyleSheet(f"background: #080808; border: {web_border}; border-radius: 27px; color: #666; font-size: 28px;")
         unfiltered_border = "2px solid #FF4444" if self.unfiltered_mode else "none"
-        self.unfiltered_btn.setStyleSheet(f"background: #080808; border: {unfiltered_border}; border-radius: 27px; color: #666; font-size: 18px;")
+        self.unfiltered_btn.setStyleSheet(f"background: #080808; border: {unfiltered_border}; border-radius: 27px; color: #666; font-size: 28px;")
         
         mode_text = []
         if self.web_mode:
             mode_text.append("WEB")
         if self.unfiltered_mode:
             mode_text.append("UNFILTERED")
-        self.label.setText(f"DUCKLLM [{' '.join(mode_text)}]" if mode_text else "DUCKLLM")
+        
+        status = getattr(self, '_current_status', "READY")
+        suffix = f" [{ ' '.join(mode_text) }]" if mode_text else ""
+        self.label.setText(f"DUCKLLM - {status}{suffix}")
 
     def animate_thinking_label(self):
         if not self.is_thinking:
@@ -470,171 +866,24 @@ class DuckLLM(QWidget):
         if random.random() < 0.05:
             self.current_phrase = random.choice(self.thinking_phrases)
         self._dot_count += 1
-        self.label.setText(f"{self.current_phrase}{'.' * (self._dot_count % 4)}")
+        self._current_status = f"{self.current_phrase}{'.' * (self._dot_count % 4)}"
+        self.update_mode_styles()
 
     def open_fullscreen(self):
-        port = 17432
-        data_dir = self.data_dir
-        ollama_cmd = self.get_ollama_cmd()
-
-        class Handler(http.server.SimpleHTTPRequestHandler):
-            def log_message(self, format, *args):
-                pass
-
-            def do_GET(self):
-                clean_path = self.path.split("?")[0]
-                json_files = {
-                    "/duckllm_chat.json": "duckllm_chat.json",
-                    "/load": "duckllm_chat.json",
-                    "/duckllm_settings.json": "duckllm_settings.json",
-                    "/load-settings": "duckllm_settings.json"
-                }
-                
-                if clean_path == "/list-chats":
-                    chats_root = os.path.join(data_dir, "chats")
-                    os.makedirs(chats_root, exist_ok=True)
-                    chat_list = []
-                    for root, _, files in os.walk(chats_root):
-                        for f in files:
-                            if f.endswith(".json"):
-                                try:
-                                    with open(os.path.join(root, f), "r", encoding="utf-8") as fin:
-                                        data = json.load(fin)
-                                        content = data[0].get("content", "") if data else "New Chat"
-                                        title = (content[:30] + '...') if len(content) > 30 else content
-                                        chat_list.insert(0, {"id": f.replace(".json", ""), "title": title})
-                                except Exception:
-                                    pass
-                    self.send_response(200)
-                    self.send_header("Content-Type", "application/json")
-                    self.send_header("Access-Control-Allow-Origin", "*")
-                    self.end_headers()
-                    self.wfile.write(json.dumps(chat_list).encode())
-                elif clean_path == "/exit":
-                    self.send_response(200)
-                    self.send_header("Access-Control-Allow-Origin", "*")
-                    self.end_headers()
-                    self.wfile.write(b'{"status": "quitting"}')
-                    QApplication.quit()
-                elif clean_path == "/api/tags":
-                    try:
-                        resp = requests.get("http://localhost:11434/api/tags", timeout=5)
-                        self.send_response(resp.status_code)
-                        self.send_header("Content-Type", "application/json")
-                        self.send_header("Access-Control-Allow-Origin", "*")
-                        self.end_headers()
-                        self.wfile.write(resp.content)
-                    except Exception:
-                        self.send_response(502)
-                        self.end_headers()
-                elif clean_path in json_files:
-                    filepath = os.path.join(data_dir, json_files[clean_path])
-                    data = b"[]"
-                    if os.path.exists(filepath):
-                        with open(filepath, "rb") as f:
-                            data = f.read()
-                    self.send_response(200)
-                    self.send_header("Content-Type", "application/json")
-                    self.send_header("Access-Control-Allow-Origin", "*")
-                    self.end_headers()
-                    self.wfile.write(data)
-                else:
-                    super(Handler, self).do_GET()
-
-            def do_POST(self):
-                clean_path = self.path.split("?")[0]
-                body_len = int(self.headers.get('Content-Length', 0))
-                body = self.rfile.read(body_len) if body_len > 0 else b""
-                
-                if clean_path == "/save-chat":
-                    cid = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("id", [""])[0]
-                    now = time.localtime()
-                    save_dir = os.path.join(data_dir, "chats", time.strftime("%Y/%m/%d", now))
-                    os.makedirs(save_dir, exist_ok=True)
-                    with open(os.path.join(save_dir, f"{cid}.json"), 'wb') as f:
-                        f.write(body)
-                    self.send_response(200)
-                    self.send_header('Access-Control-Allow-Origin', '*')
-                    self.end_headers()
-                elif clean_path == "/api/download-duck":
-                    data = json.loads(body)
-
-                    def download(m_key, repo, filename):
-                        try:
-                            _download_progress[m_key] = {"status": "downloading", "progress": 0}
-                            mdir = os.path.join(self.script_dir, "models")
-                            os.makedirs(mdir, exist_ok=True)
-                            l_path = os.path.join(mdir, f"DuckLLM-{m_key}.gguf")
-                            url = f"https://huggingface.co/{repo}/resolve/main/{filename}"
-                            with requests.get(url, stream=True) as r:
-                                t_size = int(r.headers.get('content-length', 0))
-                                d_size = 0
-                                with open(l_path, 'wb') as f:
-                                    for ch in r.iter_content(8192):
-                                        f.write(ch)
-                                        d_size += len(ch)
-                                        if t_size > 0:
-                                            _download_progress[m_key]["progress"] = int((d_size/t_size)*100)
-                            mfile = os.path.join(mdir, f"Modelfile-{m_key}")
-                            with open(mfile, "w") as f:
-                                f.write(f"FROM {l_path}\n")
-                            import subprocess
-                            subprocess.run(f"{ollama_cmd} create DuckLLM-{m_key}:latest -f \"{mfile}\"", shell=True)
-                            _download_progress[m_key] = {"status": "done", "progress": 100}
-                        except Exception as e:
-                            _download_progress[m_key] = {"status": "error", "message": str(e)}
-                    threading.Thread(
-                        target=download,
-                        args=(data.get("model_key"), data.get("repo"), data.get("filename")),
-                        daemon=True
-                    ).start()
-                    self.send_response(200)
-                    self.send_header('Access-Control-Allow-Origin', '*')
-                    self.end_headers()
-                    self.wfile.write(b'{"status":"started"}')
-                elif clean_path in ("/api/chat", "/api/generate"):
-                    try:
-                        resp = requests.post(f"http://localhost:11434{self.path}", data=body, stream=True)
-                        self.send_response(resp.status_code)
-                        for k, v in resp.headers.items():
-                            if k.lower() not in ("content-length", "transfer-encoding"):
-                                self.send_header(k, v)
-                        self.send_header("Access-Control-Allow-Origin", "*")
-                        self.end_headers()
-                        for chunk in resp.iter_content(1024): 
-                            if chunk:
-                                self.wfile.write(chunk)
-                                self.wfile.flush()
-                    except Exception:
-                        pass
-                else:
-                    self.send_response(200)
-                    self.send_header('Access-Control-Allow-Origin', '*')
-                    self.end_headers()
-
-        def serve():
-            try:
-                socketserver.TCPServer.allow_reuse_address = True
-                with socketserver.TCPServer(("", port), Handler) as httpd:
-                    httpd.serve_forever()
-            except Exception:
-                pass
-
-        server_thread = threading.Thread(target=serve, daemon=True)
-        server_thread.start()
-        for _ in range(10):
-            try:
-                with socket.create_connection(("localhost", port), timeout=0.1):
-                    break
-            except OSError:
-                time.sleep(0.1)
-        webbrowser.open(f"http://localhost:{port}/fullscreen.html")
-        QApplication.quit()
+        webbrowser.open("http://localhost:17432/fullscreen.html")
+        self.hide()
 
     def toggle_web_mode(self):
         self.web_mode = not self.web_mode
         self.save_settings()
         self.update_mode_styles()
+
+    def stop_generation(self):
+        self.abort_flag = True
+        self.is_thinking = False
+        self.on_finished()
+        # Notify the server too if needed (it will check the flag)
+        print("DuckLLM: Generation stopped by user.")
 
     def toggle_unfiltered_mode(self):
         self.unfiltered_mode = not self.unfiltered_mode
@@ -732,7 +981,9 @@ class DuckLLM(QWidget):
         self.chat_vbox.insertWidget(0, self._stream_label)
         self._pending_user_query, self._was_web_mode = q, self.web_mode
         self.is_thinking = True
-        self.status_dot.setStyleSheet("background: #FFCC00; border-radius: 4px;")
+        self.abort_flag = False
+        self.stop_btn.show()
+        self.status_dot.setStyleSheet("background: #015AE6; border-radius: 4px;")
         self.input_field.setEnabled(False)
         self.thinking_timer.start(300)
         if self.web_mode:
@@ -750,11 +1001,19 @@ class DuckLLM(QWidget):
                 html = resp.read().decode('utf-8')
                 results = re.findall(r'<a class="result__snippet" href="(.*?)"[^>]*>(.*?)</a>', html, re.DOTALL)
                 context = " ".join([re.sub(r'<[^>]+>', '', s).strip() for _, s in results[:5]])
-                sources = list(set([re.search(r'https?://(?:www\.)?([^/]+)', link).group(1) for link, _ in results[:5] if 'http' in link]))
+                sources = []
+                for link, _ in results[:5]:
+                    if 'http' in link:
+                        m = re.search(r'https?://(?:www\.)?([^/]+)', link)
+                        if m:
+                            sources.append(m.group(1))
+                sources = list(set(sources))
             m = "DuckLLM_Unfiltered:latest" if self.unfiltered_mode else "DuckLLM:latest"
-            sys_prompt = f"You are an AI assistant. Answer in the same language as the user. Context: {context}"
+            sys_prompt = f"You are an AI assistant. You MUST strictly answer in the user's language. If the user speaks Hebrew, you MUST answer in Hebrew. Context: {context}"
             res = requests.post("http://localhost:11434/api/generate", json={"model":m, "prompt":f"{sys_prompt}\n\nQ:{q}", "stream":True}, stream=True)
             for line in res.iter_lines():
+                if self.abort_flag:
+                    break
                 if line:
                     token = json.loads(line.decode()).get('response', '')
                     if token:
@@ -773,11 +1032,13 @@ class DuckLLM(QWidget):
                 msg["images"] = images
             self.chat_history.append(msg)
             m = "DuckLLM_Unfiltered:latest" if self.unfiltered_mode else "DuckLLM:latest"
-            sys_prompt = "You are a helpful AI assistant. Answer in the user's language."
+            sys_prompt = "You are a helpful AI assistant. You MUST strictly answer in the user's language. If the user speaks Hebrew, you MUST answer in Hebrew."
             sh = [{"role": "system", "content": sys_prompt}] + self.chat_history
             res = requests.post("http://localhost:11434/api/chat", json={"model": m, "messages": sh, "stream": True}, stream=True)
             full = ""
             for line in res.iter_lines():
+                if self.abort_flag:
+                    break
                 if line:
                     token = json.loads(line.decode()).get('message', {}).get('content', '')
                     full += token
@@ -794,8 +1055,9 @@ class DuckLLM(QWidget):
         if not self.has_content:
             self.has_content = True
             self.is_thinking = True
-            self.label.setText("Responding...")
-            self.status_dot.setStyleSheet("background: #00CCFF; border-radius: 4px;")
+            self._current_status = "RESPONDING"
+            self.update_mode_styles()
+            self.status_dot.setStyleSheet("background: #015AE6; border-radius: 4px;")
             self._stream_label.show()
             self.expand_ui()
         self._current_stream += t
@@ -804,7 +1066,9 @@ class DuckLLM(QWidget):
 
     def on_finished(self):
         self.is_thinking = False
-        self.label.setText("READY")
+        self.stop_btn.hide()
+        self._current_status = "READY"
+        self.update_mode_styles()
         self.status_dot.setStyleSheet("background: #00FF88; border-radius: 4px;")
         self.thinking_timer.stop()
         self.input_field.setEnabled(True)
@@ -827,7 +1091,15 @@ class DuckLLM(QWidget):
 
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    duck_llm = DuckLLM()
-    duck_llm.show()
-    sys.exit(app.exec())
+    try:
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
+        app = QApplication(sys.argv)
+        global duck_llm_instance
+        duck_llm_instance = DuckLLM()
+        duck_llm_instance.show()
+        sys.exit(app.exec())
+    except Exception as e:
+        import traceback
+        print(f"DUCKLLM CRITICAL CRASH: {e}")
+        traceback.print_exc()
+        sys.exit(1)
