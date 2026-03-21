@@ -1,0 +1,50 @@
+{
+  "name": "tduckllm",
+  "version": "1.0.0",
+  "description": "[![DuckLLM Model License](https://img.shields.io/badge/License-DuckLLM%20Proprietary-blue)](DuckLLM.license) [![DuckLLM](https://img.shields.io/badge/Version-DuckLLM%20%201.0-red)](src/README.txt) [![Base Model](https://img.shields.io/badge/Base-Qwen2.5%20Apache%202.0-green)](Apache-2.0.license)",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EithanAsulin/DuckLLM.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/EithanAsulin/DuckLLM/issues"
+  },
+  "homepage": "https://github.com/EithanAsulin/DuckLLM#readme",
+  "devDependencies": {
+    "electron": "^41.0.3",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.duckinc.duckllm",
+    "productName": "DuckLLM",
+    "win": {
+      "target": "portable",
+      "icon": "Attachment.png"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "Attachment.png",
+      "category": "public.app-category.productivity"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "Attachment.png",
+      "category": "Utility"
+    },
+    "files": [
+      "**/*",
+      "!node_modules/*"
+    ],
+    "asar": true
+  }
+}

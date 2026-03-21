@@ -1,4 +1,4 @@
-FROM DuckLLM/DuckLLM-1.0:7.5b
+FROM qwen2.5:7b
 
 TEMPLATE """<|im_start|>system
 {{ .System }}<|im_end|>

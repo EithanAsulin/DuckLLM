@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DuckLLM Setup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #08080a;
+            --blue: #0066FF;
+            --green: #00FF88;
+            --red: #FF4B4B;
+            --text: #F0F0F0;
+            --border: rgba(255, 255, 255, 0.08);
+        }
+        body { background: transparent; }
+        .glass { background: var(--bg); border-radius: 2.5rem; }
+        .step-active { background: var(--blue); }
+        .step-inactive { background: rgba(255, 255, 255, 0.05); }
+        .drag-area { -webkit-app-region: drag; }
+        .no-drag { -webkit-app-region: no-drag; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        
+        .progress-glow {
+            box-shadow: 0 0 20px rgba(0, 102, 255, 0.4);
+        }
+        @keyframes pulse-soft {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .animate-pulse-soft { animation: pulse-soft 3s infinite ease-in-out; }
+    </style>
+</head>
+<body x-data="setupWizard()" class="h-screen flex items-center justify-center font-sans text-[#F0F0F0] p-10 overflow-hidden">
+    
+    <div class="glass w-full h-full rounded-[2.5rem] border border-slate-700/50 flex flex-col shadow-2xl overflow-hidden animate-fade-in">
+        
+        <!-- Header -->
+        <div class="drag-area p-8 flex items-center justify-between border-b border-white/5">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center overflow-hidden border border-white/10">
+                    <img src="src/logo.png" class="w-7 h-7 object-contain">
+                </div>
+                <div>
+                    <h1 class="font-black text-xl tracking-tight">DuckLLM</h1>
+                    <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Universal Setup Wizard</p>
+                </div>
+            </div>
+            <button @click="closeApp()" class="no-drag w-10 h-10 rounded-full hover:bg-white/10 transition-colors flex items-center justify-center">
+                <i class="fa-solid fa-xmark text-slate-400"></i>
+            </button>
+        </div>
+
+        <!-- Content -->
+        <div class="flex-1 p-12 overflow-y-auto no-scrollbar relative flex flex-col justify-center">
+            
+            <!-- Welcome Step -->
+            <div x-show="step === 'welcome'" x-transition class="space-y-6 text-center max-w-lg mx-auto py-10">
+                <h2 class="text-5xl font-black tracking-tighter leading-none">Welcome to the New Age of AI.</h2>
+                <p class="text-slate-400 text-lg leading-relaxed">Let's get DuckLLM ready for your machine. We'll handle the dependencies and set up the model for you.</p>
+                <button @click="startStep()" class="bg-[#0066FF] hover:bg-blue-700 w-full py-5 rounded-2xl font-black text-lg transition-all shadow-xl shadow-blue-500/20 active:scale-95">
+                    Start Installation
+                </button>
+            </div>
+
+            <!-- Dependencies Step -->
+            <div x-show="step === 'dependencies'" x-transition class="space-y-8 max-w-xl mx-auto w-full py-5">
+                <h2 class="text-3xl font-black tracking-tight">System Check</h2>
+                
+                <div class="space-y-4">
+                    <div class="p-5 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <i :class="deps.ollama ? 'fa-circle-check text-[#00FF88]' : 'fa-circle-notch fa-spin text-[#0066FF]'" class="fa-solid text-xl"></i>
+                            <div>
+                                <p class="font-bold">Ollama Engine</p>
+                                <p class="text-xs text-slate-500" x-text="deps.ollama ? (isOllamaOld() ? 'Update available (' + deps.ollama + ')' : 'Ready (' + deps.ollama + ')') : 'Not found'"></p>
+                            </div>
+                        </div>
+                        <template x-if="!deps.ollama || isOllamaOld()">
+                            <button @click="installOllama(deps.ollama ? 'upgrade' : 'install')" 
+                                    class="text-xs font-bold uppercase tracking-widest bg-[#0066FF] px-3 py-1.5 rounded-lg"
+                                    x-text="deps.ollama ? 'Update' : 'Install'"></button>
+                        </template>
+                    </div>
+
+                    <div class="p-5 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <i :class="deps.python ? 'fa-circle-check text-[#00FF88]' : 'fa-circle-xmark text-[#FF4B4B]'" class="fa-solid text-xl"></i>
+                            <div>
+                                <p class="font-bold">Python Framework</p>
+                                <p class="text-xs text-slate-500" x-text="deps.python ? 'Version ' + deps.python : 'Python not found in PATH'"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div x-show="isInstalling" class="w-full bg-white/5 h-2 rounded-full overflow-hidden">
+                    <div class="bg-[#0066FF] h-full animate-pulse" style="width: 100%"></div>
+                </div>
+
+                <div class="flex gap-4">
+                    <button :disabled="!isReady" @click="step = 'model'" :class="isReady ? 'bg-[#0066FF] opacity-100' : 'bg-slate-700 opacity-50'" class="flex-1 py-5 rounded-2xl font-black text-lg transition-all shadow-xl">
+                        Continue
+                    </button>
+                    <button x-show="deps.hasModels" @click="openUninstall()" class="px-6 py-5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 font-bold hover:bg-red-500/20 transition-all">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Smart Uninstall Modal -->
+            <div x-show="showUninstall" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-10 z-[60]" x-transition>
+                <div class="bg-[#0f1012] border border-white/10 p-8 rounded-[2.5rem] max-w-2xl w-full space-y-6 flex flex-col max-h-[85vh] shadow-2xl">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-broom-wide text-red-500 text-2xl"></i>
+                            <h2 class="text-2xl font-black italic uppercase italic">Deep Cleaner</h2>
+                        </div>
+                        <button @click="showUninstall = false" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors">
+                            <i class="fa-solid fa-xmark text-sm"></i>
+                        </button>
+                    </div>
+
+                    <p class="text-slate-400 text-sm">Select the models you wish to permanently remove from your Ollama library.</p>
+                    
+                    <div class="flex-1 overflow-y-auto space-y-2 pr-2">
+                        <template x-for="m in availableModels" :key="m.name">
+                            <label class="flex items-center justify-between p-4 rounded-xl border border-white/5 hover:bg-white/5 transition-all cursor-pointer" :class="selectedModels.includes(m.name) ? 'bg-red-500/5 border-red-500/20' : ''">
+                                <div class="flex items-center gap-4">
+                                    <div class="relative flex items-center">
+                                        <input type="checkbox" :value="m.name" x-model="selectedModels" class="w-5 h-5 rounded-md appearance-none border-2 border-white/10 checked:bg-red-500 checked:border-red-500 transition-all cursor-pointer">
+                                        <i class="fa-solid fa-check absolute text-[10px] left-1 text-white pointer-events-none" x-show="selectedModels.includes(m.name)"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-sm" x-text="m.name"></div>
+                                        <div class="text-[10px] text-slate-500 font-bold" x-text="m.size"></div>
+                                    </div>
+                                </div>
+                                <div x-show="m.name.toLowerCase().includes('duck')" class="text-[9px] font-black uppercase tracking-widest bg-blue-500/10 text-blue-400 px-2 py-1 rounded-md">DuckLLM Core</div>
+                            </label>
+                        </template>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-4 border-t border-white/5">
+                        <div class="flex gap-4">
+                            <button @click="selectedModels = availableModels.map(m => m.name)" class="text-[10px] font-bold text-slate-500 hover:text-white uppercase transition-colors tracking-widest">Select All</button>
+                            <button @click="selectedModels = []" class="text-[10px] font-bold text-slate-500 hover:text-white uppercase transition-colors tracking-widest">Clear All</button>
+                        </div>
+                        <button :disabled="selectedModels.length === 0" @click="runUninstall()" :class="selectedModels.length > 0 ? 'bg-red-500 opacity-100 hover:bg-red-600' : 'bg-slate-800 opacity-50'" class="px-8 py-3 rounded-xl font-bold text-sm transition-all shadow-xl shadow-red-500/10">
+                            Confirm & Wipe
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model Selection Step -->
+            <div x-show="step === 'model'" x-transition class="space-y-8 py-5">
+                <h2 class="text-3xl font-black tracking-tight text-center">Select Your Experience</h2>
+                <div class="grid grid-cols-2 gap-6">
+                    <div @click="modelSelection = 'full'" :class="modelSelection === 'full' ? 'border-[#0066FF] bg-blue-500/10' : 'border-white/5 bg-white/5'" class="p-8 rounded-[2rem] border-2 cursor-pointer transition-all hover:scale-[1.02]">
+                        <h3 class="text-2xl font-black mb-2">Full Mode</h3>
+                        <p class="text-sm text-slate-400">7.6B Parameters. High quality responses. Recommended for 16GB+ RAM.</p>
+                    </div>
+                    <div @click="modelSelection = 'light'" :class="modelSelection === 'light' ? 'border-[#0066FF] bg-blue-500/10' : 'border-white/5 bg-white/5'" class="p-8 rounded-[2rem] border-2 cursor-pointer transition-all hover:scale-[1.02]">
+                        <h3 class="text-2xl font-black mb-2">Light Mode</h3>
+                        <p class="text-sm text-slate-400">3.1B Parameters. Fast & Efficient. Recommended for Laptops or 8GB RAM.</p>
+                    </div>
+                </div>
+                <button @click="finalize()" class="bg-[#0066FF] hover:bg-blue-700 w-full py-5 rounded-2xl font-black text-lg transition-all shadow-xl">
+                    Setup & Launch
+                </button>
+            </div>
+
+            <!-- Modern Finalizing Step -->
+            <div x-show="step === 'finalizing'" x-transition class="max-w-xl mx-auto w-full space-y-12 py-10">
+                <div class="flex flex-col items-center text-center space-y-4">
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-blue-500/20 blur-3xl rounded-full"></div>
+                        <img src="src/logo.png" class="w-24 h-24 object-contain relative animate-bounce">
+                    </div>
+                    <h2 class="text-4xl font-black tracking-tighter" x-text="progressData.isProgress ? 'Downloading Model...' : 'Initializing...'"></h2>
+                    <p class="text-slate-400 font-medium" x-text="typeof progressData === 'string' ? progressData : (progressData.sizeRead ? progressData.sizeRead + ' of ' + progressData.sizeTotal : 'Optimizing logic...')"></p>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- Progress Bar -->
+                    <div class="h-4 bg-white/5 rounded-full border border-white/10 p-1 flex items-center">
+                        <div class="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full transition-all duration-700 ease-out progress-glow"
+                             :style="{ width: (progressData.percentage || 0) + '%' }"></div>
+                    </div>
+                    
+                    <!-- Progress Stats -->
+                    <div class="flex items-center justify-between font-black italic uppercase tracking-widest text-[10px]">
+                        <div class="flex gap-4">
+                            <span class="text-blue-400" x-text="(progressData.percentage || 0) + '% COMPLETE'"></span>
+                            <span class="text-slate-500" x-show="progressData.speed" x-text="progressData.speed"></span>
+                        </div>
+                        <div class="text-slate-500" x-show="progressData.eta" x-text="'ETA: ' + progressData.eta"></div>
+                    </div>
+                </div>
+
+                <div class="p-6 rounded-3xl bg-white/5 border border-white/5 animate-pulse-soft">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-server text-blue-400"></i>
+                        <span class="text-xs font-bold text-slate-300" x-text="typeof progressData === 'string' ? progressData : progressData.raw"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Success Step -->
+            <div x-show="step === 'success'" x-transition class="max-w-xl mx-auto w-full space-y-10 text-center py-10">
+                <div class="relative inline-block">
+                    <div class="absolute inset-0 bg-green-500/20 blur-3xl rounded-full"></div>
+                    <div class="w-32 h-32 bg-[#00FF88]/10 border-4 border-[#00FF88] rounded-full flex items-center justify-center relative">
+                        <i class="fa-solid fa-check text-5xl text-[#00FF88]"></i>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <h2 class="text-5xl font-black tracking-tighter">Everything's Ready.</h2>
+                    <p class="text-slate-400 text-lg">Installation complete. DuckLLM is now optimized for your machine.</p>
+                </div>
+
+                <div class="flex flex-col gap-4">
+                    <button @click="launch()" class="bg-[#00FF88] hover:bg-green-500 text-black w-full py-5 rounded-2xl font-black text-xl transition-all shadow-xl shadow-green-500/20 active:scale-95">
+                        Launch Application
+                    </button>
+                    <p class="text-[10px] uppercase font-black tracking-[0.2em] text-slate-600">The installer will close automatically</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="px-12 py-6 bg-white/5 flex items-center justify-between text-[10px] uppercase tracking-widest font-black text-slate-500">
+            <span>By Duck Inc. &copy; 2026</span>
+            <div class="flex gap-4">
+                <div class="flex items-center gap-2"><div :class="step === 'welcome' ? 'step-active' : 'step-inactive'" class="w-2 h-2 rounded-full"></div>Welcome</div>
+                <div class="flex items-center gap-2"><div :class="step === 'dependencies' ? 'step-active' : 'step-inactive'" class="w-2 h-2 rounded-full"></div>System</div>
+                <div class="flex items-center gap-2"><div :class="step === 'model' ? 'step-active' : 'step-inactive'" class="w-2 h-2 rounded-full"></div>Model</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function setupWizard() {
+            return {
+                step: 'welcome',
+                deps: { ollama: false, python: false, admin: false, hasModels: false },
+                isReady: false,
+                isInstalling: false,
+                modelSelection: 'full',
+                progressData: { isProgress: false, percentage: 0, raw: 'Standby...' },
+                showUninstall: false,
+                availableModels: [],
+                selectedModels: [],
+
+                init() {
+                    window.electronAPI.onProgress((data) => {
+                        this.progressData = data;
+                    });
+                },
+
+                async startStep() {
+                    this.step = 'dependencies';
+                    this.deps = await window.electronAPI.checkDependencies();
+                    this.isReady = this.deps.ollama && !this.isOllamaOld();
+                },
+
+                async openUninstall() {
+                    this.availableModels = await window.electronAPI.getOllamaModels();
+                    this.selectedModels = this.availableModels
+                        .filter(m => m.name.toLowerCase().includes('duck'))
+                        .map(m => m.name);
+                    this.showUninstall = true;
+                },
+
+                async installOllama(mode = 'install') {
+                    this.isInstalling = true;
+                    this.progressData = mode === 'upgrade' ? 'Upgrading Ollama...' : 'Installing Ollama...';
+                    const success = await window.electronAPI.installOllama(mode);
+                    if (success) {
+                        this.deps = await window.electronAPI.checkDependencies();
+                        this.isReady = this.deps.ollama && !this.isOllamaOld();
+                    }
+                    this.isInstalling = false;
+                },
+
+                isOllamaOld() {
+                    if (typeof this.deps.ollama !== 'string') return false;
+                    const parts = this.deps.ollama.split('.').map(Number);
+                    if (parts[0] > 0) return false;
+                    if (parts[1] < 4) return true;
+                    return false;
+                },
+
+                async finalize() {
+                    this.step = 'finalizing';
+                    try {
+                        const result = await window.electronAPI.createModel(this.modelSelection);
+                        if (result.success) {
+                            this.step = 'success';
+                        } else {
+                            alert("Failed to create model: " + (result.error || "Check your internet connection."));
+                            this.step = 'model';
+                        }
+                    } catch (e) {
+                        alert("An error occurred during setup.");
+                        this.step = 'model';
+                    }
+                },
+
+                launch() {
+                    window.electronAPI.launchApp();
+                },
+
+                async runUninstall() {
+                    const targets = [...this.selectedModels];
+                    this.showUninstall = false;
+                    this.step = 'finalizing';
+                    this.progressData = 'Initializing cleanup...';
+                    try {
+                        const result = await window.electronAPI.uninstallApp(targets);
+                        if (result.success) {
+                            alert(targets.length + " model(s) removed successfully.");
+                            this.step = 'welcome';
+                            this.startStep();
+                        } else {
+                            alert("Uninstallation failed: " + result.error);
+                            this.step = 'dependencies';
+                        }
+                    } catch (e) {
+                        alert("An error occurred during uninstallation.");
+                        this.step = 'dependencies';
+                    }
+                },
+
+                closeApp() {
+                    window.electronAPI.closeApp();
+                }
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1008,6 +1008,7 @@
           <span class="logo-text" id="brand">DUCKLLM</span>
         </div>
         <div class="header-right">
+          <button onclick="exitApp()" class="pill-btn" style="color: var(--red); border-color: rgba(255, 75, 75, 0.2);">✕ Exit</button>
         </div>
       </header>
 
@@ -1084,6 +1085,13 @@
         }
       } catch (e) { console.error('Initial load failed:', e); }
     })();
+
+    async function exitApp() {
+      if (confirm('Close DuckLLM?')) {
+        await fetch('http://localhost:17432/exit');
+        window.close();
+      }
+    }
 
     async function loadHistory() {
       const resp = await fetch('http://localhost:17432/list-chats');

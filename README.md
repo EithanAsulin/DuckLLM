@@ -1,77 +1,67 @@
-
 [![DuckLLM Model License](https://img.shields.io/badge/License-DuckLLM%20Proprietary-blue)](DuckLLM.license)
 [![DuckLLM](https://img.shields.io/badge/Version-DuckLLM%20%201.0-red)](src/README.txt)
 [![Base Model](https://img.shields.io/badge/Base-Qwen2.5%20Apache%202.0-green)](Apache-2.0.license)
-
 
 # Official Homepage
 https://eithanasulin.github.io/DuckLLM/
 
 # Supported Systems
 - Windows
+- macOS (New!)
 - Linux
 - Android
 
 # What's DuckLLM?
-DuckLLM is a Free Local LLM (AI) Which Excels In Privacy And Security While Maintaining Impressive Perfomance And Functionality .
+DuckLLM is a Free Local LLM (AI) which excels in privacy and security while maintaining impressive performance and functionality. It makes it easy to locally host a model on your device for both Desktop & Mobile with a privacy-focused design.
 
-# Why DuckLLM?
-DuckLLM Offers a Modern Solution To Cloud Models (Like ChatGPT & Gemini), DuckLLM Makes It Easy To Locally Host a Model On Device For Both Desktop & Mobile With a Privacy Focused Design While Maintaining Functionality.
+# Getting Started (Desktop)
 
-# How Is DuckLLM Private & Secure?
-DuckLLM Utilizes Local AI To Ensure No Data Is Leaving The Computer, Other Than That DuckLLM Requires 0 Permissions Meaning It Cannot Access Or Modify Your Files And Etc, Other Than That The Only For It To Have Web Access Is Via a Button Meaning If Not Toggled On Theres No Access To Data!
+## For Developers (Source Setup)
+If you have cloned this repository:
+1. **Install Dependencies**: `npm install`
+2. **Launch Setup Wizard**: `npm start`
+3. **Build Portable Executable**: `npm run dist` (Output will be in `/dist`)
 
-# How Do i Download? 
-- Desktop
-> To Install DuckLLM Desktop its Very Simple!
-- Install The Latest DuckLLM.zip From The Releases
+## For End Users (Standalone)
+1. **Download & Run**: Launch the `DuckLLM.exe` (Windows), `.dmg` (macOS), or `.AppImage` (Linux) from the releases.
+2. **Setup Wizard**: The wizard will automatically handle **Ollama** and **Python** installation if they are missing.
+3. **Select Model**: Choose between **Full** (7.6B) or **Light** (3.1B) modes.
 
-- Unzip DuckLLM.zip
+## Alternative: Python Manual Installer
+Run the installer directly from the source:
+```bash
+python src/installer.py
+```
 
-- Run installer.py With Python (3.12 Or Older)
+# DuckLLM Mobile
+> This installation only covers Wllama
 
-- Accept [![DuckLLM's Proprietary License](https://img.shields.io/badge/license-DuckLLM%20Proprietary-blue)](DuckLLM.license) To Download.
+- Download DuckLLM Mobile from the Google Play Store.
+- Enter the App, skip or enter username, and select **Download Center**.
+- Download one of these 3 models:
+  - **DuckLLM Light (0.6b)** (Recommended for average use)
+  - **DuckLLM Base (1.6b)**
+  - **DuckLLM Pro (3.1b)**
 
-- Select Your Operating System (Windows, Ubuntu, Debian, Arch Linux Or Other Aka Other Linux Distros)
+# How To Add a Shortcut
+- **Linux**: Add a keyboard shortcut in Settings to run: `python ~/DuckLLM/DuckLLM.py`
+- **Windows**: Use PowerToys or a desktop shortcut to run: `python ~/Desktop/DuckLLM/DuckLLM.py`
+- **Note**: Click `Del` to Show and your chosen key to Hide.
 
-- DuckLLM Mobile
-> This Installation Only Covers Wllama
-
-- Download DuckLLM Mobile From The Google Play Store
-- Enter The App And Enter Your Username (Or Skip) And Select Download Center
-- Download One Of These 3 Models
-> DuckLLM Light (0.6b)
-
-> DuckLLM Base (1.6b)
-
-> DuckLLM Pro (3.1b)
-
-I Recommend Base Or Light For Average Use!
-
-# How To a Shortcut To DuckLLM
-
-In Linux You Can Add a Shortcut Via The Keyboard Section In Settings 
-
-In Windows You Can Use Windows Powertoys To Create a Shortcut
-
-> Linux : python ~/DuckLLM/DuckLLM.py
-
-> Windows python ~/Desktop/DuckLLM/DuckLLM.py
-
-# DuckLLM For Commerical Use.
-If You're Interested In Commerical Use Of The DuckLLM Model Contact One Of These
-- Email : duckinc68@gmail.com
-- Discord Community :  https://discord.com/invite/DkNt6FXf7J
+# DuckLLM For Commercial Use
+If you're interested in commercial use of the DuckLLM model, contact:
+- **Email**: duckinc68@gmail.com
+- **Discord**: https://discord.com/invite/DkNt6FXf7J
 
 # Relations To Qwen
 i Want To Clarify This, You Should Be aware This Model is Kind Of a Fine Tune Due To Just Being Unable To Train From Scratch, The Purpose Of The Additional Training Is To Improve On Parts Where Alibaba Missed With Qwen2.5. 
 
 # Source Code (Open Source)
-DuckLLM's Source Code Can Be Found In The **/src** Folder In This GitHub Repository Or In The **Releases**.
+DuckLLM's source code can be found in the **/src** folder in this GitHub repository or in the **Releases**.
 
 # Contributors 
 - **[psale](https://github.com/psale)**
 
 # License Info
-- **DuckLLM Proprietary License** Is The License For DuckLLM's Proprietary Models, Simply Stating That DuckLLM Is Only Allowed For Personal Use And For Commerical Use a Commerical License Must Be Purchased.
-- **Qwen Apache 2.0** Is The License For DuckLLM's Base Model (a Base Model Is Used Due To Just Not Being Able To Train From Scratch) 
+- **DuckLLM Proprietary License**: For proprietary models (Personal use only; Commercial license required for business).
+- **Qwen Apache 2.0**: For the DuckLLM base model (Qwen 2.5).

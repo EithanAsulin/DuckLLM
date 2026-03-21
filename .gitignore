@@ -1,0 +1,44 @@
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Build artifacts
+dist/
+build/
+release/
+
+# Local model weights (Ollama/GGUF)
+*.gguf
+models/
+Variants/models/
+
+# Logs and runtime data
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+duckllm_chat.json
+duckllm_settings.json
+data/chats/
+chats/
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.venv
+venv/
+ENV/
+env/
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VS Code / IDE settings
+.vscode/
+.idea/
+.project
+.settings/
+.classpath

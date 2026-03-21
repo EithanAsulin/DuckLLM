@@ -72,7 +72,7 @@ def main():
         model_choice = input("What Model Do You Want To Use? [Full/Light] : ").strip().lower()
 
     while not distro:
-        ask_distro = input("Which Operating System Are You Using? [Windows/Ubuntu/Debian/Arch/Other] :  ").strip().lower()
+        ask_distro = input("Which Operating System Are You Using? [Windows/macOS/Ubuntu/Debian/Arch/Other] :  ").strip().lower()
 
         if ask_distro in ["ubuntu", "debian", "arch", "other"]:
             distro = True
@@ -86,8 +86,8 @@ def main():
                 run_command("sudo apt install -y python3-pip curl", shell=True)
                 run_command("curl -fsSL https://ollama.com/install.sh | OLLAMA_VERSION=0.4.0 sh", shell=True)
             elif ask_distro == "arch":
-                run_command("sudo pacman -Sy --noconfirm", shell=True)
-                run_command("sudo pacman -S --noconfirm curl python-pip pipx", shell=True)
+                run_command("sudo python -Sy --noconfirm", shell=True)
+                run_command("sudo python -S --noconfirm curl python-pip pipx", shell=True)
                 run_command("curl -fsSL https://ollama.com/install.sh | OLLAMA_VERSION=0.4.0 sh", shell=True)
             elif ask_distro == "other":
                 wait(5)
@@ -137,6 +137,26 @@ def main():
 
             print("=== Installation Complete === ")
             print(f"Location: {duckllm_path}")
+
+        elif ask_distro == "macos":
+            distro = True
+            print("=== Installing Dependencies (macOS) ===\n")
+            run_command("curl -fsSL https://ollama.com/install.sh | sh", shell=True)
+            run_command("pip3 install PySide6 requests", shell=True)
+            
+            subprocess.Popen("ollama serve", shell=True)
+            
+            target_dir = Path.home() / "Documents" / "DuckLLM"
+            target_dir.mkdir(parents=True, exist_ok=True)
+            
+            files_to_move = ["DuckLLM.py", "Attachment.png", "Web.png", "Unfiltered.png", "duckllm_settings.json", "duckllm_chat.json"]
+            for file in files_to_move:
+                if Path(file).exists():
+                    shutil.move(str(file), str(target_dir / file))
+
+            print("=== Installation Complete === ")
+            print(f"Location: {target_dir}")
+            print(f"Run: python3 {target_dir}/DuckLLM.py")
 
         else:
             clear_screen()
