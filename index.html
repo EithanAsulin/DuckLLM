@@ -4,506 +4,429 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google-site-verification" content="googleb6b7fd04aa5bf5ff" />
-
-    <meta name="description" content="DuckLLM is a powerful, fully private, and local AI model based on Qwen 2.5 Vision. Run AI on your desktop or mobile with no cloud dependencies.">
-    <link rel="canonical" href="https://eithanasulin.github.io/DuckLLM/" />
+    <meta name="description" content="DuckLLM is a powerful, fully private, and local AI model. Run AI on your desktop or mobile with no cloud dependencies.">
+    <title>DuckLLM - The New Age of Local AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: '#0f172a',
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        html { scroll-behavior: smooth; }
-        body { background: #050507; color: #f4f4f5; font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; transition: background 0.3s, color 0.3s; }
-        
-        
-        body.light-mode { background: #fdfdfd; color: #18181b; }
-        .light-mode .nav-glass { background: rgba(255, 255, 255, 0.8); border-bottom: 1px solid rgba(0,0,0,0.1); }
-        .light-mode .text-white { color: #18181b !important; }
-        .light-mode .text-zinc-400, .light-mode .text-zinc-500 { color: #52525b; }
-        .light-mode .card-base { background: #f4f4f5; border: 1px solid #e4e4e7; }
-        .light-mode .os-header { background: linear-gradient(90deg, #f1f1f4 0%, #e4e4e7 100%); border-bottom: 1px solid #e4e4e7; }
-        .light-mode .spec-item { border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .light-mode .distro-badge { background: #f1f1f4; border: 1px solid #e4e4e7; color: #18181b; }
-        .light-mode .qa-item, .light-mode section { border-color: #e4e4e7 !important; }
-        .light-mode .release-line { background: linear-gradient(to bottom, transparent, #e4e4e7 15%, #e4e4e7 85%, transparent); }
-        .light-mode .release-dot { border-color: #fdfdfd; }
+        [x-cloak] { display: none !important; }
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .dark .glass {
+            background: rgba(15, 23, 42, 0.7);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
 
-        .nav-glass { background: rgba(5, 5, 7, 0.8); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .card-base { background: #0f0f12; border: 1px solid #1f1f23; border-radius: 24px; }
-        .spec-item { display: flex; justify-content: space-between; padding: 0.85rem 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
-        .spec-item:last-child { border: none; }
-        .os-header { background: linear-gradient(90deg, #16161a 0%, #0f0f12 100%); padding: 1.5rem 2rem; border-bottom: 1px solid #1f1f23; }
-        .anchor { scroll-margin-top: 100px; }
-        .distro-badge { background: #1a1a1e; border: 1px solid #27272a; padding: 0.75rem 1.25rem; border-radius: 16px; display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.875rem; transition: border-color 0.3s; }
-        .distro-badge:hover { border-color: #fbbf24; }
-        .qa-item { border-bottom: 1px solid #1f1f23; padding: 2rem 0; }
-        .qa-item:last-child { border: none; }
-        
-        
-    .reveal {
-            /* transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1); (original) */
-
-        opacity: 0%;
-        filter: blur(5px);
-        transform: translateY(100px) scale(0.9);
-        transform-origin: center bottom;
-
-    
-        transition: 
-            opacity 0.5s ease-out,
-            filter 0.4s ease-out,
-            transform 0.9s cubic-bezier(0.34, 1.7, 0.64, 1);
-    }
-
-    .reveal.active { 
-        filter: blur(0px); 
-        opacity: 1; 
-        transform: translateY(0px) scale(1); 
-    }
-        
-
-        
-        .release-line { position: absolute; left: 39px; top: 0; bottom: 0; width: 1px; background: linear-gradient(to bottom, transparent, #1f1f23 15%, #1f1f23 85%, transparent); }
-        .release-item { position: relative; padding-left: 80px; margin-bottom: 48px; }
-        .release-dot { position: absolute; left: 32px; top: 4px; width: 15px; height: 15px; border-radius: 50%; border: 3px solid #050507; z-index: 10; }
-        .dot-added { background: #22c55e; box-shadow: 0 0 15px rgba(34, 197, 94, 0.3); }
-        .dot-fixed { background: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
-        .dot-removed { background: #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); }
-        .log-tag { font-size: 9px; font-weight: 900; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; margin-bottom: 8px; display: inline-block; }
+        @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-scroll {
+            display: flex;
+            width: max-content;
+            animation: scroll linear infinite;
+        }
+        .animate-scroll:hover {
+            animation-play-state: paused;
+        }
     </style>
 </head>
-<body class="antialiased">
+<body x-data="{ 
+    darkMode: false, 
+    maximizedImage: null, 
+    currentPage: 'home',
+    reviews: [
+        { source: 'Google Play Store', username: 'Gilad Hazan', review: 'Nice App, Runs Smoothy And Is Great Overall.' },
+        { source: 'Google Play Store', username: 'Plusmovemet5723', review: 'Very Secure And Very Comfortable To Use, Wonderfull App.' },
+        { source: 'Google Play Store', username: 'Leo Thomas', review: 'Works Amazing.' },
+        { source: 'Google Play Store', username: 'Oshrat Kadosh', review: 'Great To Use' },
+        { source: 'GitHub', username: 'Wizard', review: 'DuckLLM is the best local LLM I have used, it helps me in coding and ordinary things, even when surfing the browser!' }
+    ]
+}" :class="{ 'dark': darkMode }" class="antialiased">
+    <div class="min-h-screen bg-slate-50 dark:bg-dark text-slate-900 dark:text-slate-50 transition-colors duration-300">
+        
+        <div x-show="maximizedImage" 
+             x-transition.opacity
+             x-cloak
+             class="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm"
+             @click="maximizedImage = null">
+            <button class="absolute top-6 right-6 text-white hover:text-slate-300 transition-colors text-4xl">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <img :src="maximizedImage" 
+                 class="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl" 
+                 @click.stop>
+        </div>
 
-    <nav class="fixed top-0 w-full z-50 nav-glass">
-        <div class="max-w-7xl mx-auto px-6 lg:px-12 h-20 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <span class="text-3xl"></span>
-                <span class="font-extrabold text-2xl tracking-tighter">DuckLLM</span>
+        <nav class="sticky top-0 z-50 glass border-b border-slate-200 dark:border-slate-800">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center gap-3 cursor-pointer" @click="currentPage = 'home'">
+                        <img src="examples/logo_animated.png" alt="DuckLLM Logo" class="w-8 h-8 sm:w-10 sm:h-10 object-contain" onerror="this.style.display='none'">
+                        <span class="font-bold text-xl sm:text-2xl tracking-tight">DuckLLM</span>
+                    </div>
+                    <div class="flex items-center gap-4 sm:gap-6">
+                        <button @click="currentPage = 'release-log'" class="font-bold text-[10px] sm:text-sm uppercase tracking-widest hover:text-blue-600 transition-colors">Documentation</button>
+                        <button @click="darkMode = !darkMode" 
+                                class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-lg sm:text-xl">
+                            <i x-show="!darkMode" class="fa-solid fa-moon text-slate-600"></i>
+                            <i x-show="darkMode" class="fa-solid fa-sun text-yellow-400" x-cloak></i>
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div class="hidden md:flex gap-10 text-[11px] font-black uppercase tracking-[0.2em] text-zinc-500">
-                <a href="#about" class="hover:text-amber-500 transition">About</a>
-                <a href="#changelog" class="hover:text-amber-500 transition">Updates</a>
-                <a href="#screenshots" class="hover:text-amber-500 transition">Screenshots</a>
-                <a href="#distros" class="hover:text-amber-500 transition">Distros</a>
-                <a href="#requirements" class="hover:text-amber-500 transition">Specs</a>
-                <a href="#qa" class="hover:text-amber-500 transition">Q&A</a>
-            </div>
-            
-            <div class="flex items-center gap-4">
-                <button id="theme-toggle" class="p-2.5 rounded-xl border border-zinc-800 hover:border-amber-500 transition-all text-xl bg-transparent">
-                    <span id="theme-icon">🌙</span>
-                </button>
+        </nav>
+
+        <main x-show="currentPage === 'home'">
+            <header class="relative overflow-hidden pt-8 sm:pt-16 pb-20 sm:pb-32">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+                        
+                        <div class="w-full lg:w-1/2 flex flex-col items-start text-left z-10">
+                            <h1 class="text-5xl sm:text-6xl lg:text-8xl font-black tracking-tighter mb-4 text-slate-900 dark:text-white leading-none">
+                                DuckLLM
+                            </h1>
+                            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-light text-slate-600 dark:text-slate-400 mb-6 sm:mb-8">
+                                The New Age Of AI
+                            </h2>
+                            <p class="text-lg sm:text-xl text-slate-500 dark:text-slate-400 mb-8 sm:mb-10 max-w-lg leading-relaxed">
+                                DuckLLM Is a Private & Secure Local AI, Experience Unparalleled Speeds Without Compromising On Anything
+                            </p>
+                            
+                            <div class="flex flex-col gap-6 sm:gap-8 w-full">
+                                <div class="w-full">
+                                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3 ml-1">Get The App</p>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                        <a href="https://github.com/EithanAsulin/DuckLLM/releases" class="flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-2xl font-bold transition-all shadow-xl shadow-blue-500/30">
+                                            <i class="fa-brands fa-github text-xl"></i> GitHub
+                                        </a>
+                                        <a href="https://play.google.com/store/apps/details?id=com.duckllm.app" class="flex items-center justify-center gap-3 bg-white dark:bg-slate-800 border-2 border-blue-600 text-blue-600 dark:text-blue-400 px-6 py-4 rounded-2xl font-bold transition-all shadow-lg hover:bg-blue-50">
+                                            <i class="fa-brands fa-google-play text-lg"></i> Play Store
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="w-full">
+                                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3 ml-1">Get Our Model</p>
+                                    
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                        <a href="https://huggingface.co/DuckLLM" class="flex items-center justify-center gap-3 bg-orange-500 hover:bg-orange-600 text-white px-6 py-4 rounded-2xl font-bold transition-all shadow-xl">
+                                            <i class="fa-solid fa-face-smile text-xl"></i> Huggingface
+                                        </a>
+                                        <a href="https://ollama.com/DuckLLM" class="flex items-center justify-center gap-3 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white px-6 py-4 rounded-2xl font-bold transition-all shadow-lg">
+                                            <i class="fa-solid fa-terminal text-lg"></i> Ollama
+                                        </a>
+                                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3 ml-1">Beware DuckLLM For Commerical Use Must Be Licensed, More Info Below In The "Partnership" Sector</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="w-full lg:w-1/2 relative flex justify-center lg:justify-end items-center mt-16 lg:mt-0 min-h-[350px] sm:min-h-[450px]">
+                            <div class="relative w-full sm:w-[550px] z-10 cursor-pointer group" @click="maximizedImage = 'examples/laptop.png'">
+                               <img src="examples/laptop.png" alt="DuckLLM Desktop" class="w-full h-auto shadow-2xl rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-700 transition-transform group-hover:scale-[1.01]" onerror="this.src='https://via.placeholder.com/800x500?text=Laptop+Screenshot'">
+                            </div>
+                            <div class="absolute -bottom-8 sm:-bottom-10 left-0 sm:left-4 lg:-left-8 w-[120px] sm:w-[200px] z-20 cursor-pointer group" @click="maximizedImage = 'examples/3.png'">
+                               <img src="examples/3.png" alt="DuckLLM Mobile" class="w-full h-auto shadow-2xl rounded-[2rem] sm:rounded-[2.5rem] border-[4px] sm:border-[8px] border-slate-900 bg-black transition-transform group-hover:scale-105" onerror="this.src='https://via.placeholder.com/300x600?text=Mobile+Screenshot'">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <section class="py-16 bg-white dark:bg-slate-900/50 overflow-hidden border-y border-slate-200 dark:border-slate-800">
+                <div class="text-center mb-10">
+                    <h2 class="text-2xl sm:text-3xl font-black tracking-tight uppercase tracking-widest">Reviews From Our Users</h2>
+                </div>
                 
-                <a href="https://play.google.com/store/apps/details?id=com.duckllm.app" class="bg-white text-black px-8 py-2.5 rounded-xl font-extrabold text-xs uppercase tracking-tighter hover:bg-amber-500 transition-all active:scale-95">
-                    Android
-                <a href="https://github.com/EithanAsulin/DuckLLM/releases" class="bg-white text-black px-8 py-2.5 rounded-xl font-extrabold text-xs uppercase tracking-tighter hover:bg-amber-500 transition-all active:scale-95">
-                    Desktop
-                </a>
-            </div>
-        </div>
-    </nav>
-
-    <section id="about" class="anchor pt-44 pb-20 px-6 max-w-6xl mx-auto reveal">
-        <div class="grid lg:grid-cols-5 gap-12 items-center">
-            <div class="lg:col-span-3">
-                <div class="inline-block bg-dark-500/10 text-blue-500 px-0 py-1.5 rounded-lg text-xs font-bold mb-6">DuckLLM By Duck Inc.</div>
-                <h1 class="text-5xl md:text-7xl font-extrabold mb-8 tracking-tighter text-white">
-                    Experience AI <br><span class="text-zinc-500">With Privacy</span>
-                </h1>
-                <p class="text-zinc-400 text-lg leading-relaxed max-w-xl">
-                    DuckLLM is a powerful, privacy-focused model built to provide a seamless GUI Experience for Your Desktop! <br><br>
-                    DuckLLM Is Based On the <strong>Qwen 2.5 Vision</strong> Model Customized To Perfection, With The Changes DuckLLM Is Capable Of Great Efficiency And File Handling <br><br>
-
-                    All While Running Entirely <strong>Locally</strong> On Your Machine With No Cloud Dependencies.
-                </p>
-            </div>
-            <div class="lg:col-span-2 card-base p-8 bg-gradient-to-br from-zinc-900 to-black border-white-500/20">
-                <h3 class="text-amber-500 font-bold uppercase text-xs tracking-widest mb-6 italic">Requirements</h3>
-                <div class="space-y-4">
-                    <div class="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/5">
-                        <span class="text-xl"></span>
-                        <div>
-                            <p class="font-bold text-sm text-white">Python 3.12</p>
-                            <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-tighter">Compiler Required</p>
-                        </div>
+                <div class="relative flex overflow-hidden">
+                    <div class="animate-scroll py-4" style="animation-duration: 40s;">
+                        <template x-for="item in [...reviews, ...reviews]" :key="Math.random()">
+                            <div class="flex-none w-[300px] sm:w-[400px] px-4">
+                                <div class="bg-slate-50 dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm h-full flex flex-col justify-between">
+                                    <div>
+                                        <div class="flex justify-between items-start mb-4">
+                                            <span class="text-[10px] font-black uppercase tracking-widest text-blue-600 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded-md" x-text="item.source"></span>
+                                            <div class="text-yellow-400 text-xs">
+                                                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                                            </div>
+                                        </div>
+                                        <p class="text-slate-600 dark:text-slate-300 italic mb-6 leading-relaxed" x-text="'&quot;' + item.review + '&quot;'"></p>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-xs" x-text="item.username.charAt(0).toUpperCase()"></div>
+                                        <span class="font-bold text-sm" x-text="item.username"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
                     </div>
-                    <div class="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/5">
-                        <span class="text-xl"></span>
-                        <div>
-                            <p class="font-bold text-sm text-white">Ollama</p>
-                            <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-tighter">Windows Only Requirement</p>
+                </div>
+            </section>
+
+            <section class="py-16 sm:py-24 bg-white dark:bg-slate-900/50 border-y border-slate-200 dark:border-slate-800 overflow-hidden">
+                <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="text-center mb-12">
+                        <p class="text-[10px] font-black uppercase tracking-[0.3em] text-blue-600 dark:text-blue-400 mb-4">See It In Action</p>
+                        <h2 class="text-4xl sm:text-5xl font-black tracking-tight mb-4">Meet DuckLLM</h2>
+                        <div class="h-1 w-20 bg-blue-600 mx-auto rounded-full"></div>
+                    </div>
+                    <div class="relative rounded-[2rem] overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700 bg-black aspect-video">
+                        <iframe
+                            src="https://www.youtube.com/embed/VJ9aH99XCaI"
+                            class="absolute inset-0 w-full h-full"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                </div>
+            </section>
+
+            <section class="py-16 sm:py-24">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="text-center mb-16">
+                        <h2 class="text-3xl sm:text-4xl font-black tracking-tight mb-4 uppercase tracking-widest">What Is DuckLLM Good At?</h2>
+                        <div class="h-1 w-20 bg-blue-600 mx-auto rounded-full"></div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-12">
+                        <div class="flex flex-col items-center text-center p-8 rounded-3xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-all hover:shadow-xl">
+                            <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900/40 rounded-2xl flex items-center justify-center mb-6 text-blue-600 dark:text-blue-400 text-3xl">
+                                <i class="fa-solid fa-bolt"></i>
+                            </div>
+                            <h3 class="text-2xl font-black mb-4">Efficiency</h3>
+                            <p class="text-slate-500 dark:text-slate-400 leading-relaxed font-medium">DuckLLM Offers Efficiency For Better Responses And Better Battery Life.</p>
+                        </div>
+                        <div class="flex flex-col items-center text-center p-8 rounded-3xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-all hover:shadow-xl">
+                            <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900/40 rounded-2xl flex items-center justify-center mb-6 text-blue-600 dark:text-blue-400 text-3xl">
+                                <i class="fa-solid fa-brain"></i>
+                            </div>
+                            <h3 class="text-2xl font-black mb-4">Knowledge</h3>
+                            <p class="text-slate-500 dark:text-slate-400 leading-relaxed font-medium">DuckLLM Is Trained On a Vast Majority Of Data And Supports 29+ Languages.</p>
+                        </div>
+                        <div class="flex flex-col items-center text-center p-8 rounded-3xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-all hover:shadow-xl">
+                            <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900/40 rounded-2xl flex items-center justify-center mb-6 text-blue-600 dark:text-blue-400 text-3xl">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            </div>
+                            <h3 class="text-2xl font-black mb-4">Interface</h3>
+                            <p class="text-slate-500 dark:text-slate-400 leading-relaxed font-medium">DuckLLM's Interface Is Smooth, Responsive & Simple Allowing You To Easily Focus On What's Important.</p>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </section>
+            </section>
 
-    <section id="changelog" class="anchor max-w-4xl mx-auto px-6 py-24 border-t border-zinc-900/50 reveal">
-        <div class="mb-16">
-
-            <h2 class="text-4xl font-black uppercase tracking-tighter text-white">Latest Desktop Release</h2>
-            <p class="text-zinc-500 text-sm mt-2 italic">v4.0.0 Release Log</p>
-        </div>
-        <div class="relative">
-            <div class="release-line"></div>
-            <div class="release-item reveal">
-                <h3 class="text-white font-bold text-xl tracking-tight">This Update Brings a Better Experience For All Users But Especially For Developers!</h3>
-                <p class="text-zinc-400 mt-2 text-sm leading-relaxed"></p>
-
-                <div class="release-dot dot-added"></div>
-                <span class="log-tag bg-green-500/10 text-green-500 border border-green-500/20">Added</span>
-
-                <h3 class="text-white font-bold text-xl tracking-tight mt-4">Full Screen Mode</h3>
-                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">Full Screen Mode With Full Sync Is Now Available For Users Who Want To Maximize Their Experience!</p>
-
-                <h3 class="text-white font-bold text-xl tracking-tight mt-4">Better Coding UI</h3>
-                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">Now For Developers, Easily Copy & Download Your Code With The New UI!</p>
-
-                <h3 class="text-white font-bold text-xl tracking-tight mt-4">Improved Perfomance</h3>
-                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">Now With a Refined API You Get Full Native Ollama Perfomance For Responses In Near Seconds!</p>
-
-
-            </div>
-            <div class="release-item reveal">
-                <div class="release-dot dot-fixed"></div>
-                <span class="log-tag bg-blue-500/10 text-blue-500 border border-blue-500/20">Fixed</span>
-                <h3 class="text-white font-bold text-xl tracking-tight">Detection Area Scale Fixed For Windows</h3>
-                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">Now You Won't Have To React In Lightning Speed Just To Add a File (sorry mb for the bug)</p>
-
-            </div>
-            <div class="release-item reveal">
-                <div class="release-dot dot-removed"></div>
-                <span class="log-tag bg-red-500/10 text-red-500 border border-red-500/20">Removed</span>
-                <h3 class="text-white font-bold text-xl tracking-tight">None!</h3>
-                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">Nothing Has Been Removed!</p>
-            </div>
-
-        </div>
-    </section>
-        <section id="changelog" class="anchor max-w-4xl mx-auto px-6 py-24 border-t border-zinc-900/50 reveal">
-        <div class="mb-16">
-
-                    <h2 class="text-4xl font-black uppercase tracking-tighter text-white">Latest Mobile Release</h2>
-            <p class="text-zinc-500 text-sm mt-2 italic">v1.0.0 Release Logs</p>
-        </div>
-
-        <div class="relative">
-            <div class="release-line"></div>
-            <div class="release-item reveal">
-                <h3 class="text-white font-bold text-xl tracking-tight">Welcome To The Age Of Native AI Directly On Your Mobile Phones!</h3>
-                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">DuckLLM Mobile utilizes Ollama & Wllama For Native Easy Local AI Models On Device!</p>
-
-                <div class="release-dot dot-added"></div>
-                <span class="log-tag bg-green-500/10 text-green-500 border border-green-500/20">Added</span>
-
-                <h3 class="text-white font-bold text-xl tracking-tight mt-4">Duck Memos</h3>
-                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">Duck Memos Also Known As DuckLLM Memories Now Allow You To Easily Manage Workflows With The Ability To Add Both Text Instructions And Files!</p>
-
-                <h3 class="text-white font-bold text-xl tracking-tight mt-4">Heavy Perfomance Boosts (Wllama)</h3>
-                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">Tested & Confirmed To Be 2x Faster Than The Closed Beta Version!</p>
-
-
-                <h3 class="text-white font-bold text-xl tracking-tight mt-4">Refined UI</h3>
-                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">Experience a Smooth Feel Across The Entire Interface With Beautiful Animations, Transitions, Gradients, Fades!</p>
-
-                <h3 class="text-white font-bold text-xl tracking-tight mt-4">Dual Mode</h3>
-                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">For Advanced Users Looking For Speed & Control You Can Turn On "Ollama" Mode For Faster Responses Utilizing Ollama In Termux</p>
-
-
-                <h3 class="text-white font-bold text-xl tracking-tight mt-4">Unfiltered Mode</h3>
-                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">Unfiltered Mode Mimics The Unfiltered Responses Of Grok AI Directly On Your Device!</p>
-
-
-                <h3 class="text-white font-bold text-xl tracking-tight mt-4">Real-Time Web Search</h3>
-                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">Now Easily Toggle On Web Search For Info About Any Topic You Want!</p>
-
-
-                <h3 class="text-white font-bold text-xl tracking-tight mt-4">Dedicated Settings Menu</h3>
-                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">Now With a Dedicated Settings Menu For Easy Customization!</p>
-
-
-                <h3 class="text-white font-bold text-xl tracking-tight mt-4">Download Center</h3>
-                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">Easily Download The Official DuckLLM Mobile Model Directly In-App</p>
-
-            </div>
-            <div class="release-item reveal">
-                <div class="release-dot dot-fixed"></div>
-                <span class="log-tag bg-blue-500/10 text-blue-500 border border-blue-500/20">Fixed</span>
-                <h3 class="text-white font-bold text-xl tracking-tight">None</h3>
-                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">No Issues</p>
-
-            </div>
-            <div class="release-item reveal">
-                <div class="release-dot dot-removed"></div>
-                <span class="log-tag bg-red-500/10 text-red-500 border border-red-500/20">Removed</span>
-                <h3 class="text-white font-bold text-xl tracking-tight">None!</h3>
-                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">No Things Removed</p>
-            </div>
-        </div>
-    </section>
-
-    <section id="screenshots" class="anchor max-w-5xl mx-auto px-6 py-24 border-t border-zinc-900/50 reveal">
-        <div class="mb-12">
-            <h2 class="text-4xl font-black uppercase tracking-tighter text-white">Screenshots</h2>
-            <p class="text-zinc-500 text-sm mt-2">A look at DuckLLM in action.</p>
-        </div>
-        <div class="relative">
-            <div class="card-base overflow-hidden border-zinc-800">
-                <div class="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
-                    <span id="carousel-title" class="text-white font-bold tracking-tight text-sm">DuckLLM Desktop (Small)</span>
-                    <span id="carousel-counter" class="text-zinc-500 text-xs font-black">1 / 6</span>
-                </div>
-                <img id="carousel-img" src="examples/1.png" alt="Screenshot" class="w-full object-contain max-h-[520px] transition-opacity duration-300" />
-                <video id="carousel-video" src="examples/Tutorial.mp4" controls class="w-full max-h-[520px] hidden"></video>
-            </div>
-            <!-- Arrows -->
-            <button onclick="changeSlide(-1)" class="absolute left-3 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-amber-500 text-white rounded-full w-10 h-10 flex items-center justify-center text-lg font-black transition-all border border-zinc-700 hover:border-amber-500">‹</button>
-            <button onclick="changeSlide(1)" class="absolute right-3 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-amber-500 text-white rounded-full w-10 h-10 flex items-center justify-center text-lg font-black transition-all border border-zinc-700 hover:border-amber-500">›</button>
-            <!-- Dots -->
-            <div class="flex justify-center gap-2 mt-5" id="carousel-dots"></div>
-        </div>
-    </section>
-    <script>
-        const totalSlides = 7;
-        let currentSlide = 0;
-        const img = document.getElementById('carousel-img');
-        const video = document.getElementById('carousel-video');
-        const dotsContainer = document.getElementById('carousel-dots');
-        const titleEl = document.getElementById('carousel-title');
-        const counterEl = document.getElementById('carousel-counter');
-        const titles = [
-            'DuckLLM Desktop (Small)',
-            'DuckLLM Desktop (Full Screen)',
-            'DuckLLM Mobile',
-            'DuckLLM Mobile (Side Panel)',
-            'DuckLLM Mobile (Duck Memos)',
-            'DuckLLM Mobile (Settings)',
-            'Tutorial'
-        ];
-
- 
-        for (let i = 0; i < totalSlides; i++) {
-            const dot = document.createElement('button');
-            dot.className = 'w-2 h-2 rounded-full transition-all ' + (i === 0 ? 'bg-amber-500 w-4' : 'bg-zinc-600');
-            dot.onclick = () => goToSlide(i);
-            dotsContainer.appendChild(dot);
-        }
-
-        function updateDots() {
-            [...dotsContainer.children].forEach((d, i) => {
-                d.className = 'w-2 h-2 rounded-full transition-all ' + (i === currentSlide ? 'bg-amber-500 w-4' : 'bg-zinc-600');
-            });
-        }
-
-        function goToSlide(n) {
-            currentSlide = n;
-            const isVideo = currentSlide === totalSlides - 1;
-            img.style.opacity = '0';
-            video.pause();
-            setTimeout(() => {
-                if (isVideo) {
-                    img.classList.add('hidden');
-                    video.classList.remove('hidden');
-                } else {
-                    video.classList.add('hidden');
-                    img.classList.remove('hidden');
-                    img.src = `examples/${currentSlide + 1}.png`;
-                    img.style.opacity = '1';
-                }
-            }, 150);
-            titleEl.textContent = titles[currentSlide];
-            counterEl.textContent = `${currentSlide + 1} / ${totalSlides}`;
-            updateDots();
-        }
-
-        function changeSlide(dir) {
-            goToSlide((currentSlide + dir + totalSlides) % totalSlides);
-        }
-    </script>
-
-    <section id="distros" class="anchor max-w-6xl mx-auto px-6 py-12 border-t border-zinc-900/50 reveal">
-        <div class="mb-8"><h2 class="text-2xl font-black uppercase tracking-tighter mb-2 text-white">Supported Distributions</h2></div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-5">
-            <div class="distro-badge"><span></span> Windows</div>
-            <div class="distro-badge"><span></span> Ubuntu LTS</div>
-            <div class="distro-badge"><span></span> Debian</div>
-            <div class="distro-badge"><span></span> Android</div>
-            <div class="distro-badge"><span></span> Arch Linux</div>
-            <div class="distro-badge"><span></span> All Linux(s)</div>
-        </div>
-    </section>
-
-    <section id="requirements" class="anchor max-w-7xl mx-auto px-6 py-20 border-t border-zinc-900/50 reveal">
-        <div class="mb-12">
-            <h2 class="text-3xl font-black mb-2 uppercase tracking-tighter text-white">System Specifications</h2>
-            <div class="h-1 w-20 bg-amber-500 rounded-full"></div>
-        </div>
-        <div class="grid lg:grid-cols-2 gap-10">
-            <div class="card-base overflow-hidden">
-                <div class="os-header flex justify-between items-center text-white italic font-extrabold">Windows <span class="text-[10px] font-black text-blue-400 bg-blue-400/10 px-3 py-1 rounded-md not-italic">x86/ARM</span></div>
-                <div class="p-8 space-y-10">
-                    <div>
-                        <h4 class="text-amber-500 font-black text-[10px] tracking-[0.2em] uppercase mb-4">Build Configuration</h4>
-                        <div class="text-sm space-y-1">
-                            <div class="spec-item"><span class="text-zinc-500">Processor</span> <span class="text-white font-medium">i5 7th Gen / Ryzen 1600</span></div>
-                            <div class="spec-item"><span class="text-zinc-500">Memory</span> <span class="text-white font-medium">8GB-12GB DDR3</span></div>
-                            <div class="spec-item"><span class="text-zinc-500">Graphics</span> <span class="text-white font-medium">Integrated Graphics</span></div>
+            <section class="py-8 sm:py-12 bg-white dark:bg-slate-900/30 border-y border-slate-200 dark:border-slate-800">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                    <p class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-6 sm:mb-8">Supported Systems</p>
+                    <div class="flex flex-wrap justify-center items-center gap-8 sm:gap-24 opacity-60">
+                        <div class="flex items-center gap-2 sm:gap-3">
+                            <i class="fa-brands fa-windows text-2xl sm:text-3xl"></i>
+                            <span class="font-bold text-lg sm:text-xl">Windows</span>
                         </div>
-                    </div>
-                    <div>
-                        <h4 class="text-green-500 font-black text-[10px] tracking-[0.2em] uppercase mb-4">Recommended Build</h4>
-                        <div class="text-sm space-y-1">
-                            <div class="spec-item"><span class="text-zinc-500">Processor</span> <span class="text-white font-medium">i5 12th Gen / Ryzen 3600x</span></div>
-                            <div class="spec-item"><span class="text-zinc-500">Memory</span> <span class="text-white font-medium">12GB - 16GB DDR4</span></div>
-                            <div class="spec-item"><span class="text-zinc-500">Graphics</span> <span class="text-white font-medium text-xs">GTX 1660 TI / Radeon 5000 (8GB+)</span></div>
+                        <div class="flex items-center gap-2 sm:gap-3">
+                            <i class="fa-brands fa-linux text-2xl sm:text-3xl"></i>
+                            <span class="font-bold text-lg sm:text-xl">Linux</span>
+                        </div>
+                        <div class="flex items-center gap-2 sm:gap-3">
+                            <i class="fa-brands fa-android text-2xl sm:text-3xl"></i>
+                            <span class="font-bold text-lg sm:text-xl">Android</span>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="card-base overflow-hidden">
-                <div class="os-header flex justify-between items-center text-white italic font-extrabold">Linux <span class="text-[10px] font-black text-orange-400 bg-orange-400/10 px-3 py-1 rounded-md not-italic">x86/ARM</span></div>
-                <div class="p-8 space-y-10">
-                    <div>
-                        <h4 class="text-amber-500 font-black text-[10px] tracking-[0.2em] uppercase mb-4">Build Configuration</h4>
-                        <div class="text-sm space-y-1">
-                            <div class="spec-item"><span class="text-zinc-500">Processor</span> <span class="text-white font-medium">i5 5200U / Ryzen 1000</span></div>
-                            <div class="spec-item"><span class="text-zinc-500">Memory</span> <span class="text-white font-medium">8GB DDR3 RAM</span></div>
-                            <div class="spec-item"><span class="text-zinc-500">Graphics</span> <span class="text-white font-medium">Intel UHD 4000</span></div>
-                        </div>
-                    </div>
-                    <div>
-                        <h4 class="text-green-500 font-black text-[10px] tracking-[0.2em] uppercase mb-4">Recommended Build</h4>
-                        <div class="text-sm space-y-1">
-                            <div class="spec-item"><span class="text-zinc-500">Processor</span> <span class="text-white font-medium">i5 10th Gen / Ryzen 3500x</span></div>
-                            <div class="spec-item"><span class="text-zinc-500">Memory</span> <span class="text-white font-medium">8GB - 12GB DDR4</span></div>
-                            <div class="spec-item"><span class="text-zinc-500">Graphics</span> <span class="text-white font-medium">Integrated Graphics</span></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-base overflow-hidden">
-                <div class="os-header flex justify-between items-center text-white italic font-extrabold">Android<span class="text-[10px] font-black text-orange-400 bg-orange-400/10 px-3 py-1 rounded-md not-italic">ARM Only (Beta)</span></div>
-                <div class="p-8 space-y-10">
-                    <div>
-                        <h4 class="text-amber-500 font-black text-[10px] tracking-[0.2em] uppercase mb-4">Minimum Specs</h4>
-                        <div class="text-sm space-y-1">
-                            <div class="spec-item"><span class="text-zinc-500">Processor</span> <span class="text-white font-medium">Snapdragon 7 Gen 1/MediaTek Dimensity 1200/Exynos 982x</span></div>
-                            <div class="spec-item"><span class="text-zinc-500">Memory</span> <span class="text-white font-medium">6GB</span></div>
-                            <div class="spec-item"><span class="text-zinc-500">Android</span> <span class="text-white font-medium">Android 12</span></div>
+            </section>
 
-                        </div>
+            <section class="py-16 sm:py-24">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="text-center mb-12 sm:mb-16">
+                        <h2 class="text-3xl sm:text-4xl font-black tracking-tight mb-4">Application Interface</h2>
+                        <div class="h-1 w-16 sm:w-24 bg-blue-600 mx-auto rounded-full"></div>
                     </div>
-                    <div>
-                        <h4 class="text-green-500 font-black text-[10px] tracking-[0.2em] uppercase mb-4">Recommended Specs</h4>
-                        <div class="text-sm space-y-1">
-                            <div class="spec-item"><span class="text-zinc-500">Processor</span> <span class="text-white font-medium">Snapdragon 8 Gen 1/MediaTek Dimensity 9000/Exynos 2200</span></div>
-                            <div class="spec-item"><span class="text-zinc-500">Memory</span> <span class="text-white font-medium">12GB (Feature Proof)</span></div>
-                            <div class="spec-item"><span class="text-zinc-500">Android</span> <span class="text-white font-medium">Newest Android</span></div>
-                        </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-10">
+                        <template x-for="num in [1, 2, 3, 4, 5, 6]" :key="num">
+                            <div class="group relative overflow-hidden rounded-2xl cursor-pointer shadow-lg border border-slate-200 dark:border-slate-800"
+                                 @click="maximizedImage = `examples/${num}.png`">
+                                <img :src="`examples/${num}.png`" 
+                                     class="w-full aspect-[4/3] object-cover transition-transform duration-700 group-hover:scale-110"
+                                     onerror="this.src='https://via.placeholder.com/600x450?text=Screenshot'">
+                                <div class="absolute inset-0 bg-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            </div>
+                        </template>
                     </div>
                 </div>
-            </div>
-            <div class="card-base overflow-hidden">
-                <div class="os-header flex justify-between items-center text-white italic font-extrabold">DuckLLM Vision<span class="text-[10px] font-black text-orange-400 bg-orange-400/10 px-3 py-1 rounded-md not-italic">This Is Calculated Without CPU & RAM Bottleneck</span></div>
-                <div class="p-8 space-y-10">
-                    <div>
-                        <h4 class="text-amber-500 font-black text-[10px] tracking-[0.2em] uppercase mb-4">Minimum Build</h4>
-                        <div class="text-sm space-y-1">
-                            <div class="spec-item"><span class="text-zinc-500">CPU</span> <span class="text-white font-medium">Intel Core i5 11th Gen/AMD Ryzen 5700</span></div>
-                            <div class="spec-item"><span class="text-zinc-500">GPU</span> <span class="text-white font-medium">AMD Radeon 5700 XT / Nvidia RTX 2080 / Intel ARC A770</span></div>
-                            <div class="spec-item"><span class="text-zinc-500">VRAM</span> <span class="text-white font-medium">8GB Ram</span></div>
+            </section>
+
+            <section class="py-16 sm:py-24 bg-slate-100 dark:bg-slate-900/80 overflow-hidden">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-10 sm:mb-16 gap-6">
+                        <div class="flex items-center gap-4">
+                            <i class="fa-solid fa-microchip text-blue-600 text-3xl sm:text-4xl"></i>
+                            <h2 class="text-3xl sm:text-4xl font-black tracking-tight">Performance Benchmarks</h2>
+                        </div>
+                        <div class="flex gap-3">
+                            <button @click="$refs.carousel.scrollBy({ left: -300, behavior: 'smooth' })" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-slate-300 dark:border-slate-700 flex items-center justify-center hover:bg-white dark:hover:bg-slate-800 transition-colors">
+                                <i class="fa-solid fa-arrow-left"></i>
+                            </button>
+                            <button @click="$refs.carousel.scrollBy({ left: 300, behavior: 'smooth' })" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-slate-300 dark:border-slate-700 flex items-center justify-center hover:bg-white dark:hover:bg-slate-800 transition-colors">
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </button>
                         </div>
                     </div>
-                    <div>
-                        <h4 class="text-green-500 font-black text-[10px] tracking-[0.2em] uppercase mb-4">Recommended Build</h4>
-                        <div class="text-sm space-y-1">
-                            <div class="spec-item"><span class="text-zinc-500">CPU</span> <span class="text-white font-medium">Intel Core i7 12th Gen/AMD Ryzen 5800</span></div>
-                            <div class="spec-item"><span class="text-zinc-500">GPU</span> <span class="text-white font-medium">AMD Radeon 6800 XT / Nvidia RTX 3080</span></div>
-                            <div class="spec-item"><span class="text-zinc-500">VRAM</span> <span class="text-white font-medium">12GB Ram</span></div>
-                        </div>
+                    
+                    <div x-ref="carousel" class="flex gap-4 sm:gap-8 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-8">
+                        <template x-for="num in [1, 2, 3]" :key="num">
+                            <div class="flex-none w-[85%] sm:w-[450px] snap-center cursor-pointer" @click="maximizedImage = `Benchmarks/${num}.png`">
+                                <div class="bg-white dark:bg-dark p-3 sm:p-4 rounded-2xl sm:rounded-3xl shadow-xl border border-slate-200 dark:border-slate-800">
+                                    <div class="bg-slate-50 dark:bg-slate-800 rounded-xl sm:rounded-2xl overflow-hidden">
+                                        <img :src="`Benchmarks/${num}.png`" 
+                                             class="w-full h-auto object-contain"
+                                             onerror="this.src='https://via.placeholder.com/400x300?text=Benchmark+Data'">
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
                     </div>
                 </div>
+            </section>
+
+            <section class="py-20 sm:py-32 relative overflow-hidden bg-blue-600 dark:bg-blue-800 text-white text-center">
+                <div class="absolute top-0 right-0 p-10 sm:p-20 opacity-10 hidden sm:block">
+                    <i class="fa-solid fa-handshake text-[15rem] sm:text-[20rem]"></i>
+                </div>
+                <div class="max-w-4xl mx-auto px-4 relative z-10">
+                    <h2 class="text-4xl sm:text-5xl md:text-7xl font-black mb-6 sm:mb-8 leading-tight">Partnership</h2>
+                    <p class="text-blue-100 text-lg sm:text-xl md:text-2xl mb-10 sm:mb-12 max-w-2xl mx-auto font-medium">
+                        Power Your Infrastructure Or Services With DuckLLM,</br> a Secure, Efficient And Local AI.
+                    </p>
+                    <div class="bg-white/10 backdrop-blur-xl border border-white/20 p-8 sm:p-12 rounded-[2rem] sm:rounded-[3rem] max-w-lg mx-auto shadow-2xl">
+                        <div class="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-2xl sm:rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                            <i class="fa-solid fa-envelope text-blue-600 text-3xl sm:text-4xl"></i>
+                        </div>
+                        <h3 class="text-2xl sm:text-3xl font-black mb-8 sm:mb-10 tracking-tight">Direct Contact</h3>
+                        <a href="/cdn-cgi/l/email-protection#3b5f4e58505255580d037b5c565a525715585456" class="block w-full bg-white text-blue-600 hover:bg-blue-50 px-6 py-4 sm:py-5 rounded-xl sm:rounded-2xl font-black text-xl sm:text-2xl transition-all shadow-xl hover:scale-[1.03]">
+                            Email
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <main x-show="currentPage === 'release-log'" x-cloak class="py-16 sm:py-24">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <button @click="currentPage = 'home'" class="mb-10 flex items-center gap-2 font-bold text-blue-600 uppercase tracking-widest text-xs sm:text-sm">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Home
+                </button>
+                <h2 class="text-4xl sm:text-5xl font-black mb-12 tracking-tighter">Documentation</h2>
+                
+                <section class="grid gap-12">
+                    <div class="bg-white dark:bg-slate-800 rounded-3xl p-8 border border-slate-200 dark:border-slate-700 shadow-sm">
+                        <div class="flex items-center gap-4 mb-8">
+                            <i class="fa-solid fa-desktop text-blue-600 text-2xl"></i>
+                            <h3 class="text-2xl font-black uppercase tracking-tight">Desktop Installation</h3>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="flex gap-4">
+                                <span class="flex-none w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">1</span>
+                                <p class="font-medium pt-1">Download the latest <strong>DuckLLM.zip</strong> from GitHub.</p>
+                            </div>
+                            <div class="flex gap-4">
+                                <span class="flex-none w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">2</span>
+                                <p class="font-medium pt-1">Unzip <strong>DuckLLM.zip</strong>.</p>
+                            </div>
+                            <div class="flex gap-4">
+                                <span class="flex-none w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">3</span>
+                                <div class="w-full">
+                                    <p class="font-medium mb-3">Run <strong>Installer.py</strong>:</p>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div class="bg-slate-100 dark:bg-slate-900 p-4 rounded-xl border-l-4 border-blue-500">
+                                            <p class="text-[10px] font-black uppercase text-slate-400 mb-1">Windows</p>
+                                            <p class="text-sm">Click on it to run.</p>
+                                        </div>
+                                        <div class="bg-slate-100 dark:bg-slate-900 p-4 rounded-xl border-l-4 border-green-500">
+                                            <p class="text-[10px] font-black uppercase text-slate-400 mb-1">Linux</p>
+                                            <code class="text-xs font-mono text-green-500">python installer.py</code>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex gap-4">
+                                <span class="flex-none w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">4</span>
+                                <p class="font-medium pt-1">Select Your Operating System.</p>
+                            </div>
+                            <div class="flex gap-4">
+                                <span class="flex-none w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">5</span>
+                                <div class="w-full">
+                                    <p class="font-medium mb-3">Create a Shortcut:</p>
+                                    <div class="space-y-3">
+                                        <div class="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                                            <p class="text-sm"><strong>Windows:</strong> Open <strong>DuckLLM.py</strong> (Inside Desktop/DuckLLM). The shortcut to Show/Hide is <kbd class="px-1.5 py-0.5 bg-white dark:bg-slate-700 rounded border border-slate-300 dark:border-slate-600 text-xs shadow-sm">Del</kbd>.</p>
+                                        </div>
+                                        <div class="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                                            <p class="text-sm"><strong>Linux:</strong> Create a Shortcut in Settings running: <code class="text-xs text-blue-500 ml-2">python ~/DuckLLM/DuckLLM.py</code></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 rounded-3xl p-8 border border-slate-200 dark:border-slate-700 shadow-sm">
+                        <div class="flex items-center gap-4 mb-8">
+                            <i class="fa-solid fa-mobile-screen-button text-blue-600 text-2xl"></i>
+                            <h3 class="text-2xl font-black uppercase tracking-tight">Mobile Installation</h3>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="flex gap-4">
+                                <span class="flex-none w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">1</span>
+                                <p class="font-medium pt-1">Download DuckLLM From The Google Play Store.</p>
+                            </div>
+                            <div class="mt-4">
+                                <a href="https://play.google.com/store/apps/details?id=com.duckllm.app" class="inline-flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-blue-500/30">
+                                    <i class="fa-brands fa-google-play"></i> Google Play Store
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
-        </div>
-    </section>
+        </main>
 
+        <footer class="bg-slate-900 text-slate-400 py-12 sm:py-16 text-center border-t border-slate-800">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="flex justify-center items-center gap-3 mb-8">
+                    <img src="examples/logo_animated.png" class="w-8 h-8 sm:w-10 sm:h-10 object-contain" onerror="this.style.display='none'">
+                    <span class="font-black text-xl sm:text-2xl text-white tracking-tighter">DuckLLM</span>
+                </div>
+                <div class="flex flex-wrap justify-center gap-6 sm:gap-8 mb-10 sm:mb-12 font-bold uppercase tracking-widest text-[10px] sm:text-xs text-slate-500">
+                    <button @click="currentPage = 'home'" class="hover:text-white transition-colors">Home</button>
+                    <button @click="currentPage = 'release-log'" class="hover:text-white transition-colors">Documentation</button>
 
-    
-    <section id="status" class="anchor max-w-7xl mx-auto px-6 py-20 border-t border-zinc-900 grid md:grid-cols-1 gap-8 reveal">
-
-        </div>
-        <div class="card-base p-8 border-amber-500/20 flex flex-col justify-between">
-            <h4 class="text-white text-center font-bold mb-4 uppercase text-sm tracking-widest">Community & Contact</h4>
-            <p class="text-sm text-center text-zinc-400 mb-6 font-mono font-bold tracking-tight">You Can Find Support Via The Official DuckLLM Discord Or The DuckLLM Guide</p>
-            <a href="https://discord.gg/DkNt6FXf7J" class="text-center bg-zinc-800 py-3 rounded-xl font-bold text-xs hover:bg-white hover:text-black transition">Join The Discord Community</a>
-            <p class="text-sm text-center text-zinc-400 mb-6 font-mono font-bold tracking-tight"></p>
-            <a href="https://discord.gg/DkNt6FXf7J" class="text-center bg-zinc-800 py-3 rounded-xl font-bold text-xs hover:bg-white hover:text-black transition">View DuckLLM Guide / Docs</a>
-        </div>
-    </section>
-
-    <section id="qa" class="anchor max-w-4xl mx-auto px-6 py-24 border-t border-zinc-900/50 reveal">
-        <div  class="text-4xl font-extrabold tracking-tighter text-white">Why DuckLLM?</div>
-        <p class="text-zinc-500 text-sm mt-2">Here are Examples Of Where DuckLLM Excels As a Better Alternative! (Situation/Alternative)</p>
-        <div class="space-y-4">
-            <div class="qa-item">
-                <h3 class="text-white font-bold text-lg mb-2">S : I Am Tired Of Paying 20$/Month For Cloud Services Which Still Limit Me</h3>
-                <p class="text-zinc-400 text-sm leading-relaxed">A: DuckLLM Is Completely Free With 0 Monthly Fees Or Cloud Services</p>
+                </div>
+                <p class="font-bold text-xs sm:text-sm">&copy; 2026 Duck Inc. All rights reserved.</p>
+                <p class="text-[10px] mt-3 opacity-40 uppercase tracking-[0.2em] font-black">Created by Eithan Asulin</p>
             </div>
+        </footer>
 
-            <div class="qa-item">
-                <h3 class="text-white font-bold text-lg mb-2">S : I Want To Have Actual Control Over My Data</h3>
-                <p class="text-zinc-400 text-sm leading-relaxed">A: DuckLLM Offers a Secure & Private Alternative For You!</p>
-            </div>            
-
-            <div class="qa-item">
-                <h3 class="text-white font-bold text-lg mb-2">S : I'm Tired Of Having To Have Internet Just To Get Help</h3>
-                <p class="text-zinc-400 text-sm leading-relaxed">A: DuckLLM Uses a Local Model, So You Can Use It Offline!</p>
-            </div>             
-
-            <div class="qa-item">
-                <h3 class="text-white font-bold text-lg mb-2">S : I Don't Want To Be Forced Into Guidelines That Make The Responses Worse</h3>
-                <p class="text-zinc-400 text-sm leading-relaxed">A: DuckLLM Offers an Unfiltered Mode For Those Who Prefer Unrestricted Responses (Or Customize The Instructions In The Modelfile)</p>
-            </div>   
-
-
-            <div class="qa-item">
-                <h3 class="text-white font-bold text-lg mb-2">S : I'm Too Scared Of Using Local Models Because Of The Complexity Of The Setup</h3>
-                <p class="text-zinc-400 text-sm leading-relaxed">A: DuckLLM Provides Simple Installation Making Using Local Models Accessible To Everyone!</p>
-            </div>   
-
-
-            </div>
-        </div>
-    </section>
-
-    <footer class="text-center py-20 border-t border-zinc-900/50 opacity-30 text-[10px] font-black tracking-[0.4em] uppercase">
-        Developed by Eithan Asulin • 2026
-    </footer>
-
-    <script>
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) entry.target.classList.add('active');
-            });
-        }, { threshold: 0.1 });
-        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-
-
-        const themeToggle = document.getElementById('theme-toggle');
-        const themeIcon = document.getElementById('theme-icon');
-        const body = document.body;
-
-
-        if (localStorage.getItem('theme') === 'light') {
-            body.classList.add('light-mode');
-            themeIcon.textContent = '☀️';
-        }
-
-        themeToggle.addEventListener('click', () => {
-            body.classList.toggle('light-mode');
-            const isLight = body.classList.contains('light-mode');
-            themeIcon.textContent = isLight ? '☀️' : '🌙';
-            localStorage.setItem('theme', isLight ? 'light' : 'dark');
-        });
-    </script>
+    </div>
 </body>
 </html>
