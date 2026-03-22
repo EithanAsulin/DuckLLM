@@ -99,6 +99,8 @@
       gap: 20px;
       transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 100;
+      will-change: transform, margin-left;
+      transform: translateZ(0);
     }
 
     #sidebar.hidden {
@@ -157,6 +159,8 @@
       align-items: center;
       justify-content: space-between;
       animation: msgAppear 0.3s ease-out forwards;
+      will-change: transform, opacity;
+      transform: translateZ(0);
     }
 
     .history-item:hover {
@@ -764,6 +768,7 @@
       opacity: 0;
       transform: translateY(20px);
       animation: msgAppear 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+      will-change: transform, opacity;
     }
 
     @keyframes msgAppear {

@@ -3,11 +3,19 @@ const path = require('path');
 const { spawn, execSync } = require('child_process');
 const fs = require('fs');
 
-// Utility to clean terminal output (strip ANSI codes)
 const cleanOutput = (data) => {
     return data.toString()
         .replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '')
         .trim();
+};
+
+const getOllamaCmd = () => {
+    if (process.platform === 'win32') return 'ollama';
+    const paths = ['ollama', '/usr/local/bin/ollama', '/snap/bin/ollama', '/usr/bin/ollama'];
+    for (const p of paths) {
+        try { execSync(`${p} --version`, { stdio: 'ignore' }); return p; } catch(e){}
+    }
+    return 'ollama';
 };
 
 const parseProgress = (line) => {
@@ -38,7 +46,7 @@ function checkSystemReady() {
     const isWin = process.platform === 'win32';
     try {
         // Quick check for ollama
-        const ollamaCmd = (isWin) ? 'ollama' : (fs.existsSync('/usr/local/bin/ollama') ? '/usr/local/bin/ollama' : 'ollama');
+        const ollamaCmd = getOllamaCmd();
         execSync(`${ollamaCmd} --version`, { stdio: 'ignore', windowsHide: isWin });
         
         // Quick check for models
@@ -128,10 +136,7 @@ ipcMain.handle('check-dependencies', async () => {
         } catch (e) { return false; }
     };
 
-    results.ollama = getVersion('ollama');
-    if (!results.ollama && !isWin) {
-        results.ollama = getVersion('/usr/local/bin/ollama');
-    }
+    results.ollama = getVersion(getOllamaCmd());
 
     results.python = getVersion(isWin ? 'python' : 'python3');
     if (!results.python) results.python = getVersion('python');
@@ -148,7 +153,7 @@ ipcMain.handle('check-dependencies', async () => {
     }
 
     try {
-        const cmd = (!isWin && !getVersion('ollama')) ? '/usr/local/bin/ollama' : 'ollama';
+        const cmd = getOllamaCmd();
         const listOutput = execSync(`${cmd} list`, { stdio: 'pipe', windowsHide: isWin }).toString();
         results.hasModels = /duck/i.test(listOutput);
     } catch (e) {}
@@ -183,7 +188,7 @@ ipcMain.handle('check-gpu', async () => {
 ipcMain.handle('get-ollama-models', async () => {
     try {
         const isWin = process.platform === 'win32';
-        const cmd = (!isWin && !execSync('ollama --version', {stdio:'ignore'})) ? '/usr/local/bin/ollama' : 'ollama';
+        const cmd = getOllamaCmd();
         const list = execSync(`${cmd} list`, { stdio: 'pipe', windowsHide: true }).toString();
         const lines = list.trim().split('\n');
         return lines.slice(1).map(line => {
@@ -197,11 +202,7 @@ ipcMain.handle('create-model', async (event, modelSelection) => {
     const win = BrowserWindow.getFocusedWindow();
     const isWin = process.platform === 'win32';
     
-    let cmd = 'ollama';
-    if (!isWin) {
-        try { execSync('ollama --version', { stdio: 'ignore' }); }
-        catch (e) { cmd = '/usr/local/bin/ollama'; }
-    }
+    let cmd = getOllamaCmd();
 
     const run = (args) => new Promise((resolve, reject) => {
         const proc = spawn(cmd, args, { windowsHide: isWin });
@@ -292,11 +293,7 @@ ipcMain.handle('kill-existing', async () => {
 ipcMain.handle('uninstall-app', async (event, modelsToRemove = []) => {
     const win = BrowserWindow.getFocusedWindow();
     const isWin = process.platform === 'win32';
-    let cmd = 'ollama';
-    if (!isWin) {
-        try { execSync('ollama --version', { stdio: 'ignore' }); }
-        catch (e) { cmd = '/usr/local/bin/ollama'; }
-    }
+    let cmd = getOllamaCmd();
 
     try {
         for (const model of modelsToRemove) {

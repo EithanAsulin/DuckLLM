@@ -756,7 +756,7 @@ class DuckLLM(QWidget):
         self.header.addWidget(self.close_btn)
 
         self.stop_btn = QPushButton("STOP 🛑")
-        self.stop_btn.setFixedSize(80, 30)
+        self.stop_btn.setFixedSize(100, 30)
         self.stop_btn.setCursor(Qt.PointingHandCursor)
         self.stop_btn.hide()
         self.stop_btn.setStyleSheet("""
@@ -808,15 +808,15 @@ class DuckLLM(QWidget):
         self.chat_vbox.insertWidget(self.chat_vbox.count() - 1, self._stream_label)
         self._current_stream = ""
 
-        btn_size = QSize(55, 55)
-        btn_style_base = "background: #080808; border-radius: 27px; color: #666; font-size: 28px;"
+        btn_size = QSize(35, 35)
+        btn_style_base = "background: #080808; border-radius: 17px; color: #666; font-size: 16px;"
         
         self.file_btn = QPushButton(self)
         self.file_btn.setFixedSize(btn_size)
         self.file_btn.hide()
         self.file_btn.clicked.connect(self.handle_file_dialog)
         self.file_btn.setIcon(QIcon(os.path.join(self.script_dir, "Attachment.png")))
-        self.file_btn.setIconSize(QSize(40, 40))
+        self.file_btn.setIconSize(QSize(20, 20))
         self.file_btn.setStyleSheet(btn_style_base)
         
         self.web_btn = QPushButton(self)
@@ -824,7 +824,7 @@ class DuckLLM(QWidget):
         self.web_btn.hide()
         self.web_btn.clicked.connect(self.toggle_web_mode)
         self.web_btn.setIcon(QIcon(os.path.join(self.script_dir, "Web.png")))
-        self.web_btn.setIconSize(QSize(40, 40))
+        self.web_btn.setIconSize(QSize(20, 20))
         self.web_btn.setStyleSheet(btn_style_base)
         
         self.unfiltered_btn = QPushButton(self)
@@ -832,7 +832,7 @@ class DuckLLM(QWidget):
         self.unfiltered_btn.hide()
         self.unfiltered_btn.clicked.connect(self.toggle_unfiltered_mode)
         self.unfiltered_btn.setIcon(QIcon(os.path.join(self.script_dir, "Unfiltered.png")))
-        self.unfiltered_btn.setIconSize(QSize(40, 40))
+        self.unfiltered_btn.setIconSize(QSize(20, 20))
         self.unfiltered_btn.setStyleSheet(btn_style_base)
  
         self.fullscreen_btn = QPushButton(self)
@@ -846,9 +846,9 @@ class DuckLLM(QWidget):
  
     def update_mode_styles(self):
         web_border = "2px solid #015AE6" if self.web_mode else "none"
-        self.web_btn.setStyleSheet(f"background: #080808; border: {web_border}; border-radius: 27px; color: #666; font-size: 28px;")
+        self.web_btn.setStyleSheet(f"background: #080808; border: {web_border}; border-radius: 17px; color: #666; font-size: 16px;")
         unfiltered_border = "2px solid #FF4444" if self.unfiltered_mode else "none"
-        self.unfiltered_btn.setStyleSheet(f"background: #080808; border: {unfiltered_border}; border-radius: 27px; color: #666; font-size: 28px;")
+        self.unfiltered_btn.setStyleSheet(f"background: #080808; border: {unfiltered_border}; border-radius: 17px; color: #666; font-size: 16px;")
         
         mode_text = []
         if self.web_mode:
@@ -858,7 +858,7 @@ class DuckLLM(QWidget):
         
         status = getattr(self, '_current_status', "READY")
         suffix = f" [{ ' '.join(mode_text) }]" if mode_text else ""
-        self.label.setText(f"DUCKLLM - {status}{suffix}")
+        self.label.setText(f"{status}{suffix}")
 
     def animate_thinking_label(self):
         if not self.is_thinking:
@@ -916,9 +916,9 @@ class DuckLLM(QWidget):
         self.container.move(mx, my)
         bx = mx + int(self._curr_w) + gap
         self.file_btn.move(bx, my + 5)
-        self.web_btn.move(bx, my + 65)
-        self.unfiltered_btn.move(bx, my + 125)
-        self.fullscreen_btn.move(bx, my + 185)
+        self.web_btn.move(bx, my + 45)
+        self.unfiltered_btn.move(bx, my + 85)
+        self.fullscreen_btn.move(bx, my + 125)
         mpath = QPainterPath()
         mpath.addRect(QRectF(mx-100, my-100, int(self._curr_w)+300, 800))
         self.setMask(QRegion(mpath.toFillPolygon().toPolygon()))
@@ -1009,7 +1009,7 @@ class DuckLLM(QWidget):
                             sources.append(m.group(1))
                 sources = list(set(sources))
             m = "DuckLLM_Unfiltered:latest" if self.unfiltered_mode else "DuckLLM:latest"
-            sys_prompt = f"You are an AI assistant. You MUST strictly answer in the user's language. If the user speaks Hebrew, you MUST answer in Hebrew. Context: {context}"
+            sys_prompt = f"You are DuckLLM. Reply naturally in the same language the user uses (e.g., reply in Hebrew only if the user types in Hebrew). Context: {context}"
             res = requests.post("http://localhost:11434/api/generate", json={"model":m, "prompt":f"{sys_prompt}\n\nQ:{q}", "stream":True}, stream=True)
             for line in res.iter_lines():
                 if self.abort_flag:
@@ -1032,7 +1032,7 @@ class DuckLLM(QWidget):
                 msg["images"] = images
             self.chat_history.append(msg)
             m = "DuckLLM_Unfiltered:latest" if self.unfiltered_mode else "DuckLLM:latest"
-            sys_prompt = "You are a helpful AI assistant. You MUST strictly answer in the user's language. If the user speaks Hebrew, you MUST answer in Hebrew."
+            sys_prompt = "You are DuckLLM. Reply naturally in the same language the user uses (e.g., reply in Hebrew only if the user types in Hebrew)."
             sh = [{"role": "system", "content": sys_prompt}] + self.chat_history
             res = requests.post("http://localhost:11434/api/chat", json={"model": m, "messages": sh, "stream": True}, stream=True)
             full = ""
