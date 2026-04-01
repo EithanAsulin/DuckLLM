@@ -1,12 +1,10 @@
-DUCKLLM VERSION v4.0.0 Universal
+DuckLLM Desktop Version : 1.0 
+DuckLLM Model : 1.0
+License: Apache 2.0 + DuckLLM Proprietary License
 
-OPEN-GPL v3 License (OPEN SOURCE FREE USE)
+After Installing Don't Forget To Make a Shortcut!
 
-After Installing Please Add To Your Shortcuts In Settings This Script :
-"python DuckLLM/DuckLLM.py"
+Thanks For Using DuckLLM!
 
-If You Don't Add This You Will Need To Trigger It Manually
-
-Click Del To Show And [CHOOSEN KEY] To Hide.
 
 
