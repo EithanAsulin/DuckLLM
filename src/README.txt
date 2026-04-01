@@ -1,4 +1,4 @@
-DuckLLM Desktop Version : 1.0 
+DuckLLM Desktop Version : 1.1.0
 DuckLLM Model : 1.0
 License: Apache 2.0 + DuckLLM Proprietary License
 
