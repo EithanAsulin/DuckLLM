@@ -16,31 +16,60 @@ DuckLLM is a free, locally-run LLM designed with a strong focus on privacy and s
 
 # Getting Started
 
-## For End Users (Standalone)
-1. **Download**: Get the latest release for your platform - `DuckLLM.exe` (Windows), `.dmg` (macOS), or `.AppImage` (Linux).
-2. **Run the Setup Wizard**: The wizard will automatically handle **Ollama** and **Python** installation if they are not already present.
-3. **Select a Model**: Choose between **Full** (7.6B) or **Light** (3.1B) depending on your hardware.
+# **Windows**
 
-## For Developers (Source Setup)
-1. **Clone the repository** and navigate to the project directory.
-2. **Install dependencies**: `npm install`
-3. **Launch the app**: `npm start` - performs background dependency checks and starts immediately.
-4. **Run the setup wizard manually**: `npm run setup` - useful for maintenance or reinstallation.
-5. **Build a portable executable**: `npm run dist` - output will be placed in the `/dist` folder.
+For **Windows Users** You Can Download **DuckLLM.zip** From The Releases and Double Click `installer.py`.
 
-## Alternative: Python Manual Installer
-You can also run the installer directly from source:
+# **Linux**
+
+For **Linux Users** Download **DuckLLM.zip** And Run
 ```bash
-python src/installer.py
+python3 installer.py
 ```
+
+# **MacOS**
+For **MacOS Users** Of Both M Series CPUs and Intel CPUs Download `DuckLLM Installer.dmg` From The Releases, Open The File and Drag **DuckLLM** Into the **Applications** Folder.
+
+# **Android**
+For **Android Users** Open The Play Store and **Search `DuckLLM`.**
+
+# Adding a Shortcut
+**To Add a Shortcut** For **DuckLLM** You Can Use :
+# Windows
+For **Windows Users** It's Recommended To Use **One Quick** With The Shortcut To
+```Windows
+python3 ~\Desktop\DuckLLM\DuckLLM.py
+```
+Or **Create a .bat File Shortcut.**
+
+
+> Press `Esc` To Close It.
+
+# Linux
+For **Linux Users** It's Mostly The Same Across Environments **(Wayland)**
+
+```Navigate
+Open Settings > Keyboard > Shortcuts > Add Custom Shortcut
+```
+In The Shortcut Type :
+```Bash
+python3 ~/DuckLLM/DuckLLM.py
+```
+
+> Press `Esc` To Close It.
+
+# MacOS
+Simply Open The App Once And It'll Appear In The Dock!
+
+> Press `Esc` To Close It.
 
 # Key Features
 - **Privacy First**: Fully local execution - no data is sent to external servers.
-- **Fast Boot**: Background dependency checks enable near-instant startup.
-- **RTL Support**: Improved Right-to-Left (Hebrew) text alignment and caret handling, optimized for both Windows and Linux.
+- **Ultra Quick**: **With DuckLLM's App You'll Experience Highly Impressive Speeds With Well Made Features.
+- **Smooth UI**: With **DuckLLM's Dynamic Island-like UI** You Experience High Responsiveness & Smooth Animations
 
 # DuckLLM Mobile
-> Mobile installation currently uses Wllama for on-device inference.
+> Mobile installation currently uses Wllama & Ollama for on-device inference.
 
 1. Download DuckLLM from the Google Play Store.
 2. Open the app, complete or skip the username setup, and navigate to **Download Center**.
@@ -49,24 +78,27 @@ python src/installer.py
    - **DuckLLM Base (1.6B)**
    - **DuckLLM Pro (3.1B)**
 
-# Keyboard Shortcuts (Desktop)
-To launch DuckLLM via a keyboard shortcut:
+# Known Issues 
+# Windows
+**In Some Window Installations** The UI Hitboxes May Be Inaccurate
 
-- **Linux**: Add a custom shortcut in System Settings pointing to: `python ~/DuckLLM/DuckLLM.py`
-- **Windows**: Use PowerToys or a desktop shortcut pointing to: `python ~/Desktop/DuckLLM/DuckLLM.py`
+# Linux
+***None!***
 
-> Press `Del` to show the window and your configured key to hide it.
-
-# Relationship to Qwen
-DuckLLM is built on **Qwen 2.5** as its base model and extends it through fine-tuning aimed at improving performance in specific areas where the base model underperforms. Training a large language model from scratch was outside the scope of this project; the additional training is focused on targeted improvements rather than architectural changes.
+# MacOS
+**Due To Apple's Aggressive Memory Management** on Heavy Workflows **DuckLLM** Might Be Closed By **MacOS,** To Prevent This **DuckLLM Uses a 3.1b Model Only** To Manage Memory Better.
 
 # Commercial Use
 For inquiries regarding commercial licensing, please reach out via:
 - **Email**: duckinc68@gmail.com
 - **Discord**: https://discord.com/invite/DkNt6FXf7J
 
+# Relationship to Qwen
+DuckLLM is built on **Qwen 2.5** as its base model and extends it through fine-tuning aimed at improving performance in specific areas where the base model underperforms. Training a large language model from scratch was outside the scope of this project; the additional training is focused on targeted improvements rather than architectural changes.
+
 # Source Code
 DuckLLM's source code is available in the **/src** folder of this repository and is also included in the official releases.
+**(Note : MacOS's Source Code Differs Only In The File Handling To Allow Compiling To a `.dmg`)**
 
 # Contributors
 - **[psale](https://github.com/psale)**
