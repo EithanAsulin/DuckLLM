@@ -1,14 +1,9 @@
-Release : DuckLLM Desktop 1.0 
-Model : DuckLLM 1.0 
+DUCKLLM VERSION v4.0.0 Universal
 
-DuckLLM PROPRIETARY LICENSE Version 1.0 + Apache 2.0
-
-https://eithanasulin.github.io/DuckLLM/
+OPEN-GPL v3 License (OPEN SOURCE FREE USE)
 
 After Installing Please Add To Your Shortcuts In Settings This Script :
-
-Linux : "python ~/DuckLLM/DuckLLM.py"
-Windows : "python ~/Desktop/DuckLLM/DuckLLM.py"
+"python DuckLLM/DuckLLM.py"
 
 If You Don't Add This You Will Need To Trigger It Manually
 

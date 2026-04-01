@@ -1,1 +1,1 @@
-FROM qwen2.5:3b
+FROM DuckLLM/DuckLLM-1.0:3.1b
