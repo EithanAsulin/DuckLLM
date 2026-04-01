@@ -18,11 +18,11 @@ DuckLLM is a free, locally-run LLM designed with a strong focus on privacy and s
 
 # **Windows**
 
-For **Windows Users** You Can Download **DuckLLM.zip** From The Releases and Double Click `installer.py`.
+For **Windows Users** You Can Download **DuckLLM Installer.zip** From The Releases and Double Click `installer.py`.
 
 # **Linux**
 
-For **Linux Users** Download **DuckLLM.zip** And Run
+For **Linux Users** Download **DuckLLM Installer.zip** And Run
 ```bash
 python3 installer.py
 ```
