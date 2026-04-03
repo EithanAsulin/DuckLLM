@@ -66,7 +66,7 @@ DuckLLM is a free, locally-run AI designed with a strong focus on privacy and se
    - **DuckLLM Pro (3.1B)**
 
 # Documentation
-**Documentation** Can Be Found In **[Documentation.md](link).**
+**Documentation** Can Be Found In **[Documentation.md](https://github.com/EithanAsulin/DuckLLM/blob/master/Documentation.md).**
 
 # Known Issues 
 
