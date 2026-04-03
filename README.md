@@ -51,9 +51,9 @@ DuckLLM is a free, locally-run AI designed with a strong focus on privacy and se
 3. Install [DuckLLM](https://play.google.com/store/apps/details?id=com.duckllm.app)!
 
 # Key Features
-- **Privacy First: ** Fully local execution - no data is sent to external servers.
+- **Privacy First:** Fully local execution - no data is sent to external servers.
 - **Ultra Quick**: **With DuckLLM's App You'll Experience Highly Impressive Speeds With Well Made Features.
-- **Smooth UI: **  With **DuckLLM's Dynamic Island-like UI** You Experience High Responsiveness & Smooth Animations
+- **Smooth UI:**  With **DuckLLM's Dynamic Island-like UI** You Experience High Responsiveness & Smooth Animations
 
 # DuckLLM Mobile
 > Mobile installation currently uses Wllama & Ollama for on-device inference.
