@@ -52,7 +52,7 @@ DuckLLM is a free, locally-run AI designed with a strong focus on privacy and se
 
 # Key Features
 - **Privacy First:** Fully local execution - no data is sent to external servers.
-- **Ultra Quick**: **With DuckLLM's App You'll Experience Highly Impressive Speeds With Well Made Features.
+- **Ultra Quick:** **With DuckLLM's App** You'll Experience Highly Impressive Speeds With Well Made Features.
 - **Smooth UI:**  With **DuckLLM's Dynamic Island-like UI** You Experience High Responsiveness & Smooth Animations
 
 # DuckLLM Mobile
