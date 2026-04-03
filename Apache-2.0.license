@@ -1,0 +1,172 @@
+DuckLLM PROPRIETARY LICENSE
+Version 1.0 — 2026
+Copyright (c) 2026 Eithan Asulin, Duck Inc. All Rights Reserved.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DEFINITIONS
+
+"Software" refers to the DuckLLM model weights, GGUF file, system
+prompt, configuration files, and any associated materials distributed
+by Duck Inc.
+
+"Commercial Use" means any use of the Software in exchange for
+monetary compensation, or any use that directly or indirectly
+generates revenue, including but not limited to: SaaS platforms,
+APIs, paid applications, business automation, consulting services,
+or integration into any product sold or licensed to third parties.
+
+"Personal Use" means use by a single individual solely for private,
+non-commercial, non-organizational purposes.
+
+"You" means the individual or entity accessing, downloading, or
+using the Software.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. OWNERSHIP AND INTELLECTUAL PROPERTY
+
+   1.1 DuckLLM, including all model weights, fine-tuning, system
+       prompt, configuration, branding, and associated materials,
+       is the exclusive intellectual property of Eithan Asulin
+       and Duck Inc.
+
+   1.2 This license does not transfer any ownership, copyright,
+       or intellectual property rights to You under any
+       circumstances.
+
+   1.3 The name "DuckLLM", "Duck Inc.", and associated logos are
+       trademarks of Eithan Asulin and may not be used without
+       explicit written permission.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2. PERMITTED USE
+
+   2.1 PERSONAL USE: You may use the Software for personal,
+       non-commercial purposes at no cost, provided you comply
+       with all terms of this license.
+
+   2.2 COMMERCIAL USE: Any Commercial Use requires a valid,
+       paid commercial license obtained directly from Duck Inc.
+       prior to such use. Using the Software commercially without
+       a paid license is a violation of this agreement and
+       applicable copyright law.
+
+   2.3 A commercial license may be obtained at:
+       https://eithanasulin.github.io/DuckLLM/
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+3. RESTRICTIONS
+
+   You expressly MAY NOT, under any circumstances:
+
+   3.1 Redistribute, resell, sublicense, rent, lease, or transfer
+       the Software or any portion of it to any third party
+       without explicit written permission from Duck Inc.
+
+   3.2 Modify, merge, adapt, translate, reverse engineer,
+       decompile, or create derivative works based on the
+       Software without explicit written permission from Duck Inc.
+
+   3.3 Use the Software or its outputs to train, fine-tune,
+       distill, or otherwise improve any other machine learning
+       model without explicit written permission from Duck Inc.
+
+   3.4 Remove, alter, obscure, or replace this license notice,
+       copyright notice, or any attribution notice from the
+       Software or its associated materials.
+
+   3.5 Claim authorship, ownership, or original creation of
+       the Software or any portion of it.
+
+   3.6 Use the Software in any way that violates applicable
+       local, national, or international law.
+
+   3.7 Use the Software to develop a competing product or
+       service without explicit written permission from Duck Inc.
+
+   3.8 Host, deploy, or make the Software available via any
+       API, web service, or platform accessible to third parties
+       without a valid commercial license.
+
+   3.9 Strip, bypass, or circumvent any technical protection
+       measures applied to the Software.
+
+   3.10 Use the Software within an organization, institution,
+        or on behalf of any business entity without a valid
+        commercial license, regardless of whether direct
+        revenue is generated.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+4. ATTRIBUTION REQUIREMENTS
+
+   4.1 Any permitted use of the Software must retain visible
+       credit to Duck Inc. and Eithan Asulin.
+
+   4.2 DuckLLM is built upon Qwen2.5 by Alibaba Cloud, which
+       is licensed under the Apache License 2.0. This attribution
+       is legally required and must be preserved in all
+       distributions and derivative works where permitted.
+       Full Apache 2.0 license text:
+       https://www.apache.org/licenses/LICENSE-2.0
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+5. ENFORCEMENT
+
+   5.1 Any violation of this license immediately and
+       automatically terminates your rights under this
+       agreement without notice.
+
+   5.2 Duck Inc. reserves the right to pursue legal action,
+       including claims for damages, injunctive relief, and
+       recovery of legal fees, against any party found in
+       violation of this license.
+
+   5.3 Failure by Duck Inc. to enforce any provision of this
+       license shall not constitute a waiver of future
+       enforcement of that or any other provision.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+6. DISCLAIMER OF WARRANTIES
+
+   6.1 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY
+       OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+       LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS
+       FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+
+   6.2 IN NO EVENT SHALL EITHAN ASULIN OR DUCK INC. BE
+       LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+       EXEMPLARY, OR CONSEQUENTIAL DAMAGES ARISING OUT OF
+       OR IN CONNECTION WITH THE USE OF THE SOFTWARE,
+       EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+   6.3 YOU ASSUME ALL RISKS ASSOCIATED WITH THE USE OF
+       THE SOFTWARE, INCLUDING BUT NOT LIMITED TO RISKS
+       OF PROGRAM ERRORS, DAMAGE TO EQUIPMENT, LOSS OF
+       DATA, OR ANY OTHER LOSSES.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+7. GOVERNING LAW
+
+   7.1 This license shall be governed by and construed in
+       accordance with the laws of the State of Israel,
+       without regard to conflict of law principles.
+
+   7.2 Any disputes arising from this license shall be
+       subject to the exclusive jurisdiction of the courts
+       of Israel.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+By downloading, accessing, or using DuckLLM, You agree to be
+bound by the terms of this license. If You do not agree to
+these terms, do not download, access, or use the Software.
+
+Copyright (c) 2026 Eithan Asulin, Duck Inc.
+All Rights Reserved.

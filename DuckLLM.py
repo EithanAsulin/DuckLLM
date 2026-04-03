@@ -1,0 +1,1562 @@
+import sys
+import os
+import json
+import requests
+import threading
+import base64
+import urllib.request
+import urllib.parse
+import re
+import datetime
+from PySide6.QtCore import Qt, QTimer, QRectF, Signal, QObject, QSize
+from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QPushButton,
+                               QLabel, QHBoxLayout, QFrame, QTextEdit, QFileDialog, QScrollArea, QSizePolicy)
+from PySide6.QtGui import QPainter, QColor, QBrush, QPainterPath, QRegion, QKeyEvent, QPixmap, QIcon, QFont
+import webbrowser
+import random
+import ctypes
+import platform
+import time
+from llama_cpp import Llama
+
+_download_progress = {}
+
+_llama_model = None
+
+def initialize_llama_model(model_path=None):
+    global _llama_model
+    if model_path is None:
+        model_path = get_resource_path("DuckLLM.gguf")
+    if not os.path.exists(model_path):
+        print(f"[ERROR] Model file not found: {model_path}")
+        return False
+    try:
+        print(f"[*] Loading model from {model_path}")
+        # fix to the loading cuz vram usage was FUCKING DOGSHIT HOLY SHIT THIS FIX WAS NEEDED
+        if _llama_model is not None:
+            del _llama_model
+            _llama_model = None
+        _llama_model = Llama(
+            model_path=model_path,
+            n_gpu_layers=-1,
+            n_ctx=8064,
+            verbose=False,
+        )
+        print("[*] Model loaded successfully")
+        return True
+    except Exception as e:
+        print(f"[ERROR] Failed to load model: {e}")
+        return False
+
+def load_unfiltered_instructions():
+    instructions_path = get_resource_path("Unfiltered_Instructions.txt")
+    try:
+        if os.path.exists(instructions_path):
+            with open(instructions_path, 'r', encoding='utf-8') as f:
+                return f.read().strip()
+    except Exception as e:
+        print(f"[ERROR] Failed to load unfiltered instructions: {e}")
+    return None
+
+
+def get_base_path():
+    if getattr(sys, 'frozen', False):
+        return os.path.dirname(sys.executable)
+    else:
+        return os.path.dirname(os.path.abspath(__file__))
+
+def get_resource_path(relative_path):
+    if getattr(sys, 'frozen', False):
+        return os.path.join(sys._MEIPASS, relative_path)
+    else:
+        return os.path.join(os.path.dirname(os.path.abspath(__file__)), relative_path)
+
+
+if hasattr(ctypes, "windll"):
+    os.environ["QT_QPA_PLATFORM"] = "wayland"
+
+class CodeBlock(QFrame):
+    def __init__(self, code: str, language: str = "", parent=None):
+        super().__init__(parent)
+        self.code = code
+        self.language = language
+        self.setStyleSheet("background: #0d0d0d; border: 1px solid #2a2a2a; border-radius: 10px;")
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        header = QFrame()
+        header.setStyleSheet("background: #1a1a1a; border-radius: 10px 10px 0 0; border-bottom: 1px solid #2a2a2a;")
+        header_layout = QHBoxLayout(header)
+        header_layout.setContentsMargins(12, 6, 8, 6)
+
+        lang_label = QLabel(language.upper() if language else "CODE")
+        lang_label.setStyleSheet("color: #555; font-size: 10px; font-weight: 700; letter-spacing: 2px;")
+
+        copy_btn = QPushButton("Copy")
+        copy_btn.setFixedHeight(24)
+        copy_btn.setStyleSheet("""
+            QPushButton { background: #2a2a2a; color: #aaa; border: none; border-radius: 4px;
+                          font-size: 11px; padding: 0 10px; }
+            QPushButton:hover { background: #3a3a3a; color: white; }
+        """)
+        copy_btn.clicked.connect(self.copy_code)
+
+        dl_btn = QPushButton("↓ Download")
+        dl_btn.setFixedHeight(24)
+        dl_btn.setToolTip("Save to Downloads folder")
+        dl_btn.setStyleSheet("""
+            QPushButton { background: #2a2a2a; color: #aaa; border: none; border-radius: 4px;
+                          font-size: 11px; padding: 0 10px; }
+            QPushButton:hover { background: #0040FF; color: white; }
+        """)
+        dl_btn.clicked.connect(self.download_code)
+
+        header_layout.addWidget(lang_label)
+        header_layout.addStretch()
+        header_layout.addWidget(copy_btn)
+        header_layout.addWidget(dl_btn)
+
+        code_edit = QTextEdit()
+        code_edit.setReadOnly(True)
+        code_edit.setFont(QFont("Courier New", 12))
+        code_edit.setStyleSheet("background: transparent; border: none; color: #e0e0e0; padding: 12px;")
+        code_edit.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        code_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
+        line_count = code.count('\n') + 1
+        line_height = 22
+        estimated_height = min(line_count * line_height + 30, 350)
+        code_edit.setFixedHeight(max(estimated_height, 60))
+        code_edit.setPlainText(code)
+
+        layout.addWidget(header)
+        layout.addWidget(code_edit)
+
+    def copy_code(self):
+        QApplication.clipboard().setText(self.code)
+        btn = self.sender()
+        if btn:
+            btn.setText("Copied!")
+            QTimer.singleShot(1500, lambda: btn.setText("Copy"))
+
+    def download_code(self):
+        ext_map = {
+            "python": ".py", "py": ".py", "javascript": ".js", "js": ".js",
+            "typescript": ".ts", "ts": ".ts", "html": ".html", "css": ".css",
+            "bash": ".sh", "sh": ".sh", "json": ".json", "sql": ".sql",
+            "java": ".java", "cpp": ".cpp", "c": ".c", "rust": ".rs",
+            "go": ".go", "ruby": ".rb", "php": ".php", "swift": ".swift",
+        }
+        ext = ext_map.get(self.language.lower(), ".txt")
+        downloads = os.path.join(os.path.expanduser("~"), "Downloads")
+        if not os.path.exists(downloads):
+            downloads = os.path.expanduser("~")
+        timestamp = datetime.datetime.now().strftime("%H%M%S")
+        filename = f"duckllm_code_{timestamp}{ext}"
+        path = os.path.join(downloads, filename)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(self.code)
+        btn = self.sender()
+        if btn:
+            btn.setText("✓ Saved!")
+            btn.setToolTip(f"Saved to: {path}")
+            short_path = f"…/{os.path.basename(path)}"
+            QTimer.singleShot(1000, lambda: btn.setText(short_path))
+            QTimer.singleShot(4000, lambda: btn.setText("↓ Download"))
+            QTimer.singleShot(4000, lambda: btn.setToolTip("Save to Downloads folder"))
+
+class ChatMessageWidget(QFrame):
+    def __init__(self, text: str, role: str = "assistant", parent=None):
+        super().__init__(parent)
+        self.setStyleSheet("background: transparent; border: none;")
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 4, 0, 4)
+        layout.setSpacing(6)
+        segments = self._parse_segments(text)
+        for seg_type, content, lang in segments:
+            if seg_type == "code":
+                layout.addWidget(CodeBlock(content, lang))
+            else:
+                if content.strip():
+                    lbl = QLabel()
+                    lbl.setTextFormat(Qt.MarkdownText)
+                    formatted = content.strip().replace("\n", "  \n")
+                    lbl.setText(formatted)
+                    lbl.setWordWrap(True)
+                    lbl.setTextInteractionFlags(Qt.TextSelectableByMouse)
+                    
+                    # RTL Detection for Hebrew
+                    if any('\u0590' <= c <= '\u05FF' for c in content):
+                        formatted += "\u200F"
+                        lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                        lbl.setLayoutDirection(Qt.RightToLeft)
+                    else:
+                        lbl.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                        lbl.setLayoutDirection(Qt.LeftToRight)
+
+                    color = "#CCC" if role == "assistant" else "#aaddff"
+                    lbl.setStyleSheet(f"color: {color}; font-size: 16px; line-height: 1.6; background: transparent;")
+                    layout.addWidget(lbl)
+
+    def _parse_segments(self, text):
+        segments = []
+        pattern = re.compile(r'```(\w*)\n?(.*?)```', re.DOTALL)
+        last = 0
+        for m in pattern.finditer(text):
+            if m.start() > last:
+                segments.append(("text", text[last:m.start()], ""))
+            segments.append(("code", m.group(2), m.group(1)))
+            last = m.end()
+        if last < len(text):
+            segments.append(("text", text[last:], ""))
+        return segments
+
+class WorkerSignals(QObject):
+    text_received = Signal(str)
+    finished = Signal()
+
+class DuckLLM(QWidget):
+    show_requested = Signal()
+
+    def __init__(self):
+        super().__init__()
+        self.script_dir = get_base_path()
+        self.data_dir = os.path.join(self.script_dir, "data")
+        os.makedirs(self.data_dir, exist_ok=True)
+        
+        self.setWindowFlags(
+            Qt.FramelessWindowHint |
+            Qt.WindowStaysOnTopHint |
+            Qt.Tool
+        )
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setAttribute(Qt.WA_NoSystemBackground)
+        self.setStyleSheet("background: transparent;")
+        self.setMouseTracking(True)
+        
+        self.compact_w, self.compact_h = 320, 60
+        self.hover_w, self.hover_h = 900, 100
+        self.max_w, self.max_h = 1000, 750
+        
+        self._curr_w, self._curr_h = float(self.compact_w), float(self.compact_h)
+        self.target_w, self.target_h = self._curr_w, self._curr_h
+        
+        self.is_thinking = False
+        self.has_content = False
+        self.expand_direction = "down"
+        self.pending_images = []        # max 1 image 
+        self.pending_text_files = []    # max 3 text files
+        self.web_mode = False
+        self.unfiltered_mode = False
+        self.settings_file = os.path.join(self.script_dir, "duckllm_settings.json")
+        self.unfiltered_instructions = load_unfiltered_instructions()
+        self.load_settings()
+        
+        self.chat_history = []
+        try:
+            _base = get_base_path()
+        except NameError:
+            _base = os.getcwd()
+        self.chats_dir = os.path.join(_base, "chats")
+        os.makedirs(self.chats_dir, exist_ok=True)
+        self.chat_file = os.path.join(_base, "duckllm_chat.json")
+        self._pending_user_query = ""
+        self._was_web_mode = False
+        
+        self.thinking_phrases = [
+            "Please Wait", "Processing", "Analyzing",
+            "Generating", "Almost Done", "Hold On",
+        ]
+        self.current_phrase = "THINKING"
+        self._dot_count = 0
+        self.thinking_timer = QTimer()
+        self.thinking_timer.timeout.connect(self.animate_thinking_label)
+        
+        self.signals = WorkerSignals()
+        self.signals.text_received.connect(self.update_response_ui)
+        self.signals.finished.connect(self.on_finished)
+
+        self.show_requested.connect(self._on_show_requested)
+
+        if platform.system() == "Windows":
+            threading.Thread(target=self._setup_win32_hotkey, daemon=True).start()
+
+        initialize_llama_model()
+
+        self.init_ui()
+        
+        self.engine = QTimer()
+        self.engine.timeout.connect(self.update_physics)
+        self.engine.start(16)
+        
+        screen_geo = QApplication.primaryScreen().geometry()
+        self.setGeometry(screen_geo)
+        self.pivot_logic()
+
+    def eventFilter(self, obj, event):
+        if obj is self.input_field and event.type() == event.Type.KeyPress:
+            if event.key() in (Qt.Key_Return, Qt.Key_Enter) and not (event.modifiers() & Qt.ShiftModifier):
+                self.start_query()
+                return True
+        return super().eventFilter(obj, event)
+
+    def _on_input_changed(self):
+        doc_height = self.input_field.document().size().height()
+        new_height = min(max(int(doc_height) + 12, 44), 120)
+        self.input_field.setFixedHeight(new_height)
+        if not self.has_content:
+            self.expand_ui()
+
+    def keyPressEvent(self, event: QKeyEvent):
+        if event.key() == Qt.Key_Escape:
+            QApplication.quit()
+            sys.exit()
+
+    def _setup_win32_hotkey(self):
+        if not hasattr(ctypes, "windll"):
+            return
+        WM_HOTKEY = 0x0312
+        MOD_NONE = 0x0000
+        VK_DELETE = 0x2E
+        HOTKEY_ID = 1
+
+        user32 = ctypes.windll.user32
+        if not user32.RegisterHotKey(None, HOTKEY_ID, MOD_NONE, VK_DELETE):
+            print("Could not register Delete hotkey (key may be in use by another app).")
+            return
+
+        from ctypes import wintypes as wt
+        msg = wt.MSG()
+        try:
+            while True:
+                if user32.GetMessageA(ctypes.byref(msg), None, 0, 0):
+                    if msg.message == WM_HOTKEY and msg.wParam == HOTKEY_ID:
+                        self.show_requested.emit()
+                    user32.TranslateMessage(ctypes.byref(msg))
+                    user32.DispatchMessageA(ctypes.byref(msg))
+        finally:
+            user32.UnregisterHotKey(None, HOTKEY_ID)
+
+    def _on_show_requested(self):
+        self.activateWindow()
+        self.raise_()
+        self.expand_ui()
+        self.input_field.setFocus()
+
+    def load_settings(self):
+        if os.path.exists(self.settings_file):
+            try:
+                with open(self.settings_file, 'r') as f:
+                    data = json.load(f)
+                    self.web_mode = data.get('web_mode', False)
+                    self.unfiltered_mode = data.get('unfiltered_mode', False)
+            except Exception as e:
+                print(f"Error loading settings: {e}")
+        self.save_settings()
+
+    def save_settings(self):
+        try:
+            with open(self.settings_file, 'w') as f:
+                json.dump({
+                    "web_mode": self.web_mode,
+                    "unfiltered_mode": self.unfiltered_mode
+                }, f, indent=2)
+        except Exception as e:
+            print(f"Error saving settings: {e}")
+
+    def save_chat(self):
+        try:
+
+            saveable = []
+            for msg in self.chat_history:
+                entry = {"role": msg["role"], "content": msg["content"]}
+                saveable.append(entry)
+            with open(self.chat_file, 'w', encoding='utf-8') as f:
+                json.dump(saveable, f, indent=2, ensure_ascii=False)
+            print(f"[Chat] Saved {len(saveable)} messages to {self.chat_file}")
+        except Exception as e:
+            print(f"[Chat] Error saving chat: {e}")
+
+    def init_ui(self):
+        self.container = QFrame(self)
+        self.main_layout = QVBoxLayout(self.container)
+        self.main_layout.setContentsMargins(40, 15, 40, 25)
+        
+        self.header_container = QWidget()
+        self.header = QHBoxLayout(self.header_container)
+        self.header.setContentsMargins(0, 0, 0, 0)
+        self.status_dot = QFrame()
+        self.status_dot.setFixedSize(8, 8)
+        self.status_dot.setStyleSheet("background: #00FF88; border-radius: 4px;")
+        self.label = QLabel("DUCKLLM")
+        self.label.setStyleSheet("color: #444; font-weight: 800; font-size: 11px; letter-spacing: 4px;")
+        self.header.addWidget(self.status_dot)
+        self.header.addWidget(self.label)
+        self.header.addStretch()
+        
+        self.preview_frame = QFrame()
+        self.preview_frame.hide()
+        self.preview_frame.setFixedSize(160, 72)
+        self.preview_frame.setStyleSheet("""
+            QFrame {
+                background: #111;
+                border: 1px solid #2a2a2a;
+                border-radius: 10px;
+            }
+        """)
+
+        chip_layout = QVBoxLayout(self.preview_frame)
+        chip_layout.setContentsMargins(10, 8, 10, 8)
+        chip_layout.setSpacing(5)
+
+        top_row = QHBoxLayout()
+        top_row.setContentsMargins(0, 0, 0, 0)
+        top_row.setSpacing(6)
+
+        self.attach_icon_label = QLabel("📄")
+        self.attach_icon_label.setFixedSize(26, 26)
+        self.attach_icon_label.setAlignment(Qt.AlignCenter)
+        self.attach_icon_label.setStyleSheet("font-size: 18px; background: transparent; border: none;")
+
+        self.attach_count_label = QLabel("")
+        self.attach_count_label.setFixedSize(18, 18)
+        self.attach_count_label.setAlignment(Qt.AlignCenter)
+        self.attach_count_label.setStyleSheet("""
+            background: #0040FF; color: white; border-radius: 9px;
+            font-size: 10px; font-weight: 700;
+        """)
+        self.attach_count_label.hide()
+
+        self.remove_img_btn = QPushButton("✕")
+        self.remove_img_btn.setFixedSize(18, 18)
+        self.remove_img_btn.setCursor(Qt.PointingHandCursor)
+        self.remove_img_btn.setStyleSheet("""
+            QPushButton {
+                background: #222;
+                color: #666;
+                border: none;
+                border-radius: 9px;
+                font-size: 9px;
+                font-weight: bold;
+            }
+            QPushButton:hover { background: #FF4444; color: white; }
+        """)
+        self.remove_img_btn.clicked.connect(self.clear_attachment)
+
+        top_row.addWidget(self.attach_icon_label)
+        top_row.addWidget(self.attach_count_label)
+        top_row.addStretch()
+        top_row.addWidget(self.remove_img_btn)
+
+        self.file_info_label = QLabel()
+        self.file_info_label.setStyleSheet("color: #666; font-size: 11px; background: transparent; border: none;")
+        self.file_info_label.setMaximumWidth(140)
+
+        chip_layout.addLayout(top_row)
+        chip_layout.addWidget(self.file_info_label)
+
+        self.input_field = QTextEdit()
+        self.input_field.setPlaceholderText("Ask DuckLLM...")
+        self.input_field.hide()
+        self.input_field.setFixedHeight(44)
+        self.input_field.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.input_field.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.input_field.setStyleSheet("background: transparent; border: none; color: white; font-size: 20px; padding: 6px 0;")
+        self.input_field.textChanged.connect(self._on_input_changed)
+        self.input_field.installEventFilter(self)
+
+        self.chat_scroll = QScrollArea()
+        self.chat_scroll.setWidgetResizable(True)
+        self.chat_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.chat_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.chat_scroll.setStyleSheet("background: transparent; border: none;")
+        self.chat_scroll.hide()
+
+        self.chat_container = QWidget()
+        self.chat_container.setStyleSheet("background: transparent;")
+        self.chat_vbox = QVBoxLayout(self.chat_container)
+        self.chat_vbox.setContentsMargins(0, 0, 0, 0)
+        self.chat_vbox.setSpacing(8)
+        self.chat_vbox.addStretch()
+        self.chat_scroll.setWidget(self.chat_container)
+
+        self._stream_label = QLabel()
+        self._stream_label.setTextFormat(Qt.MarkdownText)
+        self._stream_label.setWordWrap(True)
+        self._stream_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self._stream_label.setStyleSheet("color: #CCC; font-size: 16px; background: transparent;")
+        self._stream_label.hide()
+        self.chat_vbox.insertWidget(self.chat_vbox.count() - 1, self._stream_label)
+
+        self._current_stream = ""
+
+        btn_size = QSize(55, 55)
+        btn_style_base = "background: transparent; border: none;"
+        
+        self.file_btn = QPushButton(self)
+        self.file_btn.setFixedSize(btn_size)
+        self.file_btn.hide()
+        self.file_btn.clicked.connect(self.handle_file_dialog)
+        self.file_btn.setStyleSheet(btn_style_base)
+        if os.path.exists(get_resource_path("Attachment.png")):
+            self.file_btn.setIcon(QIcon(get_resource_path("Attachment.png")))
+            self.file_btn.setIconSize(btn_size)
+        else:
+            self.file_btn.setText("📎")
+            self.file_btn.setStyleSheet("background: #080808; border-radius: 27px; color: #666; font-size: 18px;")
+
+        self.web_btn = QPushButton(self)
+        self.web_btn.setFixedSize(btn_size)
+        self.web_btn.hide()
+        self.web_btn.clicked.connect(self.toggle_web_mode)
+        self.web_btn.setStyleSheet(btn_style_base)
+        if os.path.exists(get_resource_path("Web.png")):
+            self.web_btn.setIcon(QIcon(get_resource_path("Web.png")))
+            self.web_btn.setIconSize(btn_size)
+        else:
+            self.web_btn.setText("🌐")
+            self.web_btn.setStyleSheet("background: #080808; border-radius: 27px; color: #666; font-size: 18px;")
+        
+        self.unfiltered_btn = QPushButton(self)
+        self.unfiltered_btn.setFixedSize(btn_size)
+        self.unfiltered_btn.hide()
+        self.unfiltered_btn.clicked.connect(self.toggle_unfiltered_mode)
+        self.unfiltered_btn.setStyleSheet(btn_style_base)
+        if os.path.exists(get_resource_path("Unfiltered.png")):
+            self.unfiltered_btn.setIcon(QIcon(get_resource_path("Unfiltered.png")))
+            self.unfiltered_btn.setIconSize(btn_size)
+        else:
+            self.unfiltered_btn.setText("🔓")
+            self.unfiltered_btn.setStyleSheet("background: #080808; border-radius: 27px; color: #666; font-size: 18px;")
+
+        self.fullscreen_btn = QPushButton(self)
+        self.fullscreen_btn.setFixedSize(btn_size)
+        self.fullscreen_btn.hide()
+        self.fullscreen_btn.clicked.connect(self.open_fullscreen)
+        self.fullscreen_btn.setText("⛶")
+        self.fullscreen_btn.setStyleSheet("background: #080808; border-radius: 27px; color: #666; font-size: 18px;")
+        self.fullscreen_btn.setToolTip("Open Fullscreen")
+
+        self.update_mode_styles()
+
+    def update_mode_styles(self):
+        web_border = "2px solid #0040FF" if self.web_mode else "none"
+        self.web_btn.setStyleSheet(f"background: transparent; border: {web_border}; border-radius: 27px;")
+        
+        unfiltered_border = "2px solid #FF4444" if self.unfiltered_mode else "none"
+        self.unfiltered_btn.setStyleSheet(f"background: transparent; border: {unfiltered_border}; border-radius: 27px;")
+
+        mode_text = []
+        if self.web_mode:
+            mode_text.append("WEB")
+        if self.unfiltered_mode:
+            mode_text.append("UNFILTERED")
+        
+        if mode_text:
+            self.label.setText(f"DUCKLLM [{' '.join(mode_text)}]")
+        else:
+            self.label.setText("DUCKLLM")
+
+    def animate_thinking_label(self):
+        if not self.is_thinking:
+            return
+        
+        if random.random() < 0.05:
+            self.current_phrase = random.choice(self.thinking_phrases)
+        
+        self._dot_count += 1
+        dots = "." * (self._dot_count % 4)
+        self.label.setText(f"{self.current_phrase}{dots}")
+
+    def open_fullscreen(self):
+        import http.server
+        import socketserver
+        import socket
+        port = 17432
+        resource_dir = get_resource_path("")
+        script_dir = self.script_dir
+
+        class Handler(http.server.SimpleHTTPRequestHandler):
+            def __init__(self, *args, **kwargs):
+                self.script_dir = script_dir
+                self.data_dir = os.path.join(script_dir, "data")
+                super().__init__(*args, directory=resource_dir, **kwargs)
+            def log_message(self, format, *args):
+                pass
+            def do_GET(self):
+                clean_path = self.path.split("?")[0]
+                query = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
+                
+                json_map = {
+                    "/duckllm_chat.json": os.path.join("data", "duckllm_chat.json"),
+                    "/load": os.path.join("data", "duckllm_chat.json"),
+                    "/duckllm_settings.json": os.path.join("data", "duckllm_settings.json"),
+                    "/load-settings": os.path.join("data", "duckllm_settings.json"),
+                }
+                
+                if clean_path == "/list-chats":
+                    chats_root = os.path.join(self.data_dir, "chats")
+                    os.makedirs(chats_root, exist_ok=True)
+                    
+                    chat_list = []
+                    for root, dirs, files in os.walk(chats_root):
+                        for f in files:
+                            if f.endswith(".json"):
+                                full_path = os.path.join(root, f)
+                                try:
+                                    with open(full_path, "r", encoding="utf-8") as f_in:
+                                        data = json.load(f_in)
+                                        title = "New Chat"
+                                        if data and len(data) > 0:
+                                            content = data[0].get("content", "")
+                                            title = (content[:30] + '...') if len(content) > 30 else content
+                                        chat_list.insert(0, {"id": f.replace(".json", ""), "title": title or "New Chat"})
+                                except Exception:
+                                    continue
+                    
+                    data = json.dumps(chat_list).encode("utf-8")
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.end_headers()
+                    self.wfile.write(data)
+                elif clean_path == "/load-chat":
+                    chat_id = query.get("id", [""])[0]
+                    if not chat_id:
+                        self.send_response(400)
+                        self.end_headers()
+                        return
+                    
+                    target_file = f"{chat_id}.json"
+                    filepath = None
+                    chats_root = os.path.join(self.data_dir, "chats")
+                    for root, _, files in os.walk(chats_root):
+                        if target_file in files:
+                            filepath = os.path.join(root, target_file)
+                            break
+                    
+                    data = b"[]"
+                    if filepath and os.path.exists(filepath):
+                        try:
+                            with open(filepath, "rb") as f:
+                                data = f.read()
+                        except Exception:
+                            pass
+                    
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.end_headers()
+                    self.wfile.write(data)
+                elif clean_path in json_map:
+                    filepath = os.path.join(script_dir, json_map[clean_path])
+                    try:
+                        with open(filepath, "rb") as f:
+                            data = f.read()
+                    except FileNotFoundError:
+                        data = b"[]"
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Content-Length", str(len(data)))
+                    self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+                    self.send_header("Pragma", "no-cache")
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.end_headers()
+                    self.wfile.write(data)
+                elif clean_path == "/api/tags":
+                    try:
+                        models = []
+                        if _llama_model is not None:
+                            models.append({
+                                "name": "DuckLLM:active",
+                                "modified_at": "2024-01-01T00:00:00Z",
+                                "size": 0,
+                                "digest": "duckllm-active"
+                            })
+                        # Also surface any downloaded GGUFs
+                        models_dir = os.path.join(script_dir, "models")
+                        if os.path.isdir(models_dir):
+                            for f in os.listdir(models_dir):
+                                if f.endswith(".gguf"):
+                                    models.append({
+                                        "name": f.replace(".gguf", ""),
+                                        "path": os.path.join(models_dir, f),
+                                        "size": os.path.getsize(os.path.join(models_dir, f)),
+                                    })
+                        tags_response = {"models": models}
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/json")
+                        self.send_header("Access-Control-Allow-Origin", "*")
+                        self.end_headers()
+                        self.wfile.write(json.dumps(tags_response).encode())
+                    except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
+                        pass
+                    except Exception as e:
+                        print(f"[TAGS ERROR] {e}")
+                        try:
+                            self.send_response(502)
+                            self.end_headers()
+                            self.wfile.write(json.dumps({"error": str(e)}).encode())
+                        except Exception:
+                            pass
+                elif clean_path == "/api/download-progress":
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.end_headers()
+                    self.wfile.write(json.dumps(_download_progress).encode())
+                elif clean_path == "/api/list-duck-models":
+                    try:
+                        resp = requests.get("https://huggingface.co/api/models?author=DuckLLM", timeout=10)
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/json")
+                        self.send_header("Access-Control-Allow-Origin", "*")
+                        self.end_headers()
+                        self.wfile.write(resp.content)
+                    except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
+                        pass
+                    except Exception as e:
+                        print(f"[HF DISCOVERY ERROR] {e}")
+                        try:
+                            self.send_response(502)
+                            self.end_headers()
+                            self.wfile.write(json.dumps({"error": str(e)}).encode())
+                        except Exception:
+                            pass
+                else:
+                    super().do_GET()
+
+            def do_POST(self):
+                query = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
+                clean_path = self.path.split("?")[0]
+                
+                if clean_path == '/save-chat':
+                    chat_id = query.get("id", [""])[0]
+                    if not chat_id:
+                        self.send_response(400)
+                        self.end_headers()
+                        return
+                    
+                    length = int(self.headers.get('Content-Length', 0))
+                    body = self.rfile.read(length)
+                    
+                    # Structured Storage: chats/YYYY/MM/DD/ (duck note: idk what ts comment is for but imma keep it as a pointer)
+                    now = time.localtime()
+                    dated_dir = os.path.join(self.data_dir, "chats", 
+                                             time.strftime("%Y", now), 
+                                             time.strftime("%m", now), 
+                                             time.strftime("%d", now))
+                    os.makedirs(dated_dir, exist_ok=True)
+                    filepath = os.path.join(dated_dir, f"{chat_id}.json")
+                    
+                    try:
+                        with open(filepath, 'w', encoding='utf-8') as f:
+                            f.write(body.decode('utf-8'))
+                        self.send_response(200)
+                    except Exception as e:
+                        print(f"[SAVE ERROR] {e}")
+                        self.send_response(500)
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                elif self.path in ('/save', '/save-settings'):
+                    length = int(self.headers.get('Content-Length', 0))
+                    body = self.rfile.read(length)
+                    filename = 'duckllm_chat.json' if self.path == '/save' else 'duckllm_settings.json'
+                    try:
+                        path = os.path.join(self.data_dir, filename)
+                        with open(path, 'w', encoding='utf-8') as f:
+                            f.write(body.decode('utf-8'))
+                        self.send_response(200)
+                    except Exception:
+                        self.send_response(500)
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                elif clean_path == "/api/download-duck":
+                    length = int(self.headers.get('Content-Length', 0))
+                    body = json.loads(self.rfile.read(length))
+                    model_id = body.get("repo")      # e.g. "DuckLLM/DuckLLM-1.0-7.6B-GGUF"
+                    filename = body.get("filename")  # e.g. "DuckLLM-1.0-Q4_K_M.gguf"
+                    m_key    = body.get("model_key") # display name e.g. "7.6B"
+
+                    if not model_id or not filename:
+                        self.send_response(400)
+                        self.end_headers()
+                        return
+
+                    url = f"https://huggingface.co/{model_id}/resolve/main/{filename}"
+
+                    def run_download(m_key, download_url, local_filename):
+                        try:
+                            _download_progress[m_key] = {"status": "downloading", "progress": 0}
+                            models_dir = os.path.join(script_dir, "models")
+                            os.makedirs(models_dir, exist_ok=True)
+                            local_path = os.path.join(models_dir, local_filename)
+
+                            with requests.get(download_url, stream=True, timeout=30) as r:
+                                r.raise_for_status()
+                                total_size = int(r.headers.get('content-length', 0))
+                                downloaded = 0
+                                with open(local_path, 'wb') as f:
+                                    for chunk in r.iter_content(chunk_size=8192):
+                                        if chunk:
+                                            f.write(chunk)
+                                            downloaded += len(chunk)
+                                            if total_size > 0:
+                                                _download_progress[m_key]["progress"] = int(
+                                                    (downloaded / total_size) * 100
+                                                )
+
+                            _download_progress[m_key] = {
+                                "status": "done",
+                                "progress": 100,
+                                "model_path": local_path,
+                                "model_key": m_key,
+                            }
+                            print(f"[DOWNLOAD] {m_key} saved to {local_path}")
+                        except Exception as e:
+                            _download_progress[m_key] = {"status": "error", "message": str(e)}
+                            print(f"[DOWNLOAD ERROR] {m_key}: {e}")
+
+                    safe_filename = f"DuckLLM-{m_key}.gguf"
+                    threading.Thread(
+                        target=run_download,
+                        args=(m_key, url, safe_filename),
+                        daemon=True
+                    ).start()
+
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/json')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    self.wfile.write(b'{"status": "started"}')
+                elif clean_path == '/delete-chat':
+                    # Recursive deletion (Python God Mode: Clean cleanup)
+                    chat_id = query.get("id", [""])[0]
+                    if chat_id:
+                        found = False
+                        chats_root = os.path.join(self.data_dir, "chats")
+                        target_file = f"{chat_id}.json"
+                        for root, _, files in os.walk(chats_root):
+                            if target_file in files:
+                                os.remove(os.path.join(root, target_file))
+                                found = True
+                        if found:
+                            self.send_response(200)
+                        else:
+                            # Also check data root level for legacy chats
+                            root_file = os.path.join(self.data_dir, f"{chat_id}.json")
+                            if os.path.exists(root_file):
+                                os.remove(root_file)
+                                self.send_response(200)
+                            else:
+                                self.send_response(404)
+                    else:
+                        self.send_response(400)
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                elif clean_path == "/api/delete-model":
+                    length = int(self.headers.get('Content-Length', 0))
+                    body = json.loads(self.rfile.read(length))
+                    m_key = body.get("model_key")
+
+                    if not m_key:
+                        self.send_response(400)
+                        self.end_headers()
+                        return
+
+                    try:
+                        models_dir = os.path.join(script_dir, "models")
+                        local_gguf = os.path.join(models_dir, f"DuckLLM-{m_key}.gguf")
+
+                        if os.path.exists(local_gguf):
+                            os.remove(local_gguf)
+
+                        if m_key in _download_progress:
+                            del _download_progress[m_key]
+
+                        self.send_response(200)
+                        self.send_header('Content-Type', 'application/json')
+                        self.send_header('Access-Control-Allow-Origin', '*')
+                        self.end_headers()
+                        self.wfile.write(b'{"status": "deleted"}')
+                    except Exception as e:
+                        print(f"[DELETE ERROR] {e}")
+                        self.send_response(500)
+                        self.send_header('Content-Type', 'application/json')
+                        self.send_header('Access-Control-Allow-Origin', '*')
+                        self.end_headers()
+                        self.wfile.write(json.dumps({"error": str(e)}).encode())
+                elif clean_path == "/api/load-model":
+                    # Load a previously downloaded GGUF into the running process
+                    length = int(self.headers.get('Content-Length', 0))
+                    body = json.loads(self.rfile.read(length))
+                    m_key = body.get("model_key")
+
+                    if not m_key:
+                        self.send_response(400)
+                        self.send_header('Access-Control-Allow-Origin', '*')
+                        self.end_headers()
+                        return
+
+                    models_dir = os.path.join(script_dir, "models")
+                    local_path = os.path.join(models_dir, f"DuckLLM-{m_key}.gguf")
+
+                    if not os.path.exists(local_path):
+                        self.send_response(404)
+                        self.send_header('Content-Type', 'application/json')
+                        self.send_header('Access-Control-Allow-Origin', '*')
+                        self.end_headers()
+                        self.wfile.write(json.dumps({"error": "Model file not found"}).encode())
+                        return
+
+                    def do_load():
+                        ok = initialize_llama_model(local_path)
+                        print(f"[LOAD-MODEL] {m_key}: {'ok' if ok else 'failed'}")
+
+                    threading.Thread(target=do_load, daemon=True).start()
+
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/json')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"status": "loading", "model_key": m_key}).encode())
+
+                elif clean_path == "/log":
+                    length = int(self.headers.get("Content-Length", 0))
+                    msg = self.rfile.read(length).decode("utf-8")
+                    print(f"[FRONTEND LOG] {msg}")
+                    self.send_response(200)
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.end_headers()
+                elif clean_path in ("/api/chat", "/api/generate"):
+                    # Direct llama handling (should fix streaming now)
+                    length = int(self.headers.get('Content-Length', 0))
+                    body = self.rfile.read(length)
+                    
+                    try:
+                        payload = json.loads(body.decode('utf-8'))
+                        messages = payload.get('messages', [])
+                        
+                        if _llama_model is None:
+                            self.send_response(503)
+                            self.send_header("Content-Type", "application/json")
+                            self.send_header("Access-Control-Allow-Origin", "*")
+                            self.end_headers()
+                            self.wfile.write(json.dumps({"error": "Model not loaded"}).encode())
+                            return
+                        
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/x-ndjson")
+                        self.send_header("Access-Control-Allow-Origin", "*")
+                        self.end_headers()
+                        
+                        # Stream response
+                        response = _llama_model.create_chat_completion(
+                            messages=messages,
+                            stream=True
+                        )
+                        
+                        for chunk in response:
+                            if 'choices' in chunk and len(chunk['choices']) > 0:
+                                delta = chunk['choices'][0].get('delta', {})
+                                if 'content' in delta:
+                                    chunk_response = {
+                                        "model": "DuckLLM",
+                                        "message": {"role": "assistant", "content": delta['content']},
+                                        "done": False
+                                    }
+                                    try:
+                                        self.wfile.write(json.dumps(chunk_response).encode() + b'\n')
+                                        self.wfile.flush()
+                                    except Exception:
+                                        break
+                        
+                        final_response = {
+                            "model": "DuckLLM",
+                            "message": {"role": "assistant", "content": ""},
+                            "done": True
+                        }
+                        try:
+                            self.wfile.write(json.dumps(final_response).encode() + b'\n')
+                            self.wfile.flush()
+                        except Exception:
+                            pass
+                            
+                    except Exception as e:
+                        print(f"[LLAMA API ERROR] {e}")
+                        try:
+                            self.send_response(502)
+                            self.send_header("Content-Type", "application/json")
+                            self.send_header("Access-Control-Allow-Origin", "*")
+                            self.end_headers()
+                            self.wfile.write(json.dumps({"error": str(e)}).encode())
+                        except Exception:
+                            pass
+            def do_OPTIONS(self):
+                self.send_response(200)
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
+                self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+                self.end_headers()
+
+        try:
+            with socket.create_connection(("localhost", port), timeout=0.3):
+                webbrowser.open(f"http://localhost:{port}/fullscreen.html")
+                QApplication.quit()
+                return
+        except OSError:
+            pass
+
+        import signal as _signal
+        try:
+            import subprocess
+            result = subprocess.run(["fuser", f"{port}/tcp"], capture_output=True, text=True)
+            for pid in result.stdout.split():
+                try:
+                    os.kill(int(pid), _signal.SIGTERM)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        class ReusableTCPServer(socketserver.TCPServer):
+            allow_reuse_address = True
+        def serve():
+            with ReusableTCPServer(("", port), Handler) as httpd:
+                httpd.serve_forever()
+
+        t = threading.Thread(target=serve)
+        t.daemon = False
+        t.start()
+
+        for _ in range(20):
+            try:
+                with socket.create_connection(("localhost", port), timeout=0.1):
+                    break
+            except OSError:
+                time.sleep(0.1)
+
+        webbrowser.open(f"http://localhost:{port}/fullscreen.html")
+        QApplication.quit()
+
+    def toggle_web_mode(self):
+        self.web_mode = not self.web_mode
+        self.save_settings()
+        self.update_mode_styles()
+
+    def toggle_unfiltered_mode(self):
+        self.unfiltered_mode = not self.unfiltered_mode
+        self.save_settings()
+        self.update_mode_styles()
+
+    def pivot_logic(self):
+        self.expand_direction = "down"
+        items = [self.header_container, self.input_field, self.preview_frame, self.chat_scroll]
+        for i in items:
+            self.main_layout.removeWidget(i)
+        for i in items:
+            self.main_layout.addWidget(i)
+
+    def enterEvent(self, event):
+        if not self.is_thinking:
+            self.expand_ui()
+
+            self.activateWindow()
+            self.input_field.setFocus()
+
+    def leaveEvent(self, event):
+        if not self.input_field.hasFocus() and not self.is_thinking:
+            self.target_w, self.target_h = self.compact_w, self.compact_h
+            self.input_field.hide()
+            self.chat_scroll.hide()
+            self.file_btn.hide()
+            self.web_btn.hide()
+            self.unfiltered_btn.hide()
+            self.fullscreen_btn.hide()
+
+    def mousePressEvent(self, event):
+
+        self.activateWindow()
+        self.input_field.setFocus()
+        super().mousePressEvent(event)
+
+    def update_physics(self):
+        lerp = 0.14
+        self._curr_w += (self.target_w - self._curr_w) * lerp
+        self._curr_h += (self.target_h - self._curr_h) * lerp
+        self.container.setFixedSize(int(self._curr_w), int(self._curr_h))
+        
+        mx = (self.width() - int(self._curr_w)) // 2
+        my = 50
+        gap = 15
+        
+        self.container.move(mx, my)
+        
+        btn_y = my + 5
+        self.file_btn.move(mx + int(self._curr_w) + gap, btn_y)
+        self.web_btn.move(mx + int(self._curr_w) + gap, btn_y + 60)
+        self.unfiltered_btn.move(mx + int(self._curr_w) + gap, btn_y + 120)
+        self.fullscreen_btn.move(mx + int(self._curr_w) + gap, btn_y + 180)
+
+
+        mpath = QPainterPath()
+        
+        buffer = 150
+        sensor_rect = QRectF(
+            mx - buffer,
+            my - buffer,
+            int(self._curr_w) + gap + 80 + (buffer * 2),
+            int(self._curr_h) + (buffer * 2)
+        )
+        mpath.addRect(sensor_rect)
+        
+        self.setMask(QRegion(mpath.toFillPolygon().toPolygon()))
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setCompositionMode(QPainter.CompositionMode_Clear)
+        painter.fillRect(self.rect(), Qt.transparent)
+        painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+
+        rect = QRectF(self.container.geometry())
+        path = QPainterPath()
+        path.addRoundedRect(rect, 30, 30)
+        painter.fillPath(path, QBrush(QColor(8, 8, 8)))
+
+    def expand_ui(self):
+        self.pivot_logic()
+        input_h = self.input_field.height()
+        h_sum = 50 + input_h
+
+        if self.preview_frame.isVisible():
+            h_sum += self.preview_frame.height() + 12
+
+        if self.has_content:
+            chat_h = min(self.chat_container.sizeHint().height() + 20, 500)
+            chat_h = max(chat_h, 80)
+            h_sum += chat_h
+            self.chat_scroll.show()
+            self.chat_scroll.setMinimumHeight(0)
+
+        self.target_h = min(max(h_sum, self.hover_h), self.max_h)
+        self.target_w = self.hover_w if not self.has_content else self.max_w
+        self.input_field.show()
+        self.file_btn.show()
+        self.web_btn.show()
+        self.unfiltered_btn.show()
+        self.fullscreen_btn.show()
+        
+        self.activateWindow()
+        self.input_field.setFocus()
+
+    def handle_file_dialog(self):
+        IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif", ".tiff", ".tif"}
+
+        paths, _ = QFileDialog.getOpenFileNames(
+            self,
+            "Select up to 3 files or 1 image",
+            "",
+            "Files (*.txt *.py *.docx *.pdf *.cpp *.cp *.js *.jsx *.css *.html *.md *.json *.jsonl "
+            "*.xml *.yaml *.yml *.csv *.java *.c *.h *.hpp *.cs *.php *.rb *.go *.rs *.ts *.tsx "
+            "*.sql *.sh *.bash *.ps1 *.lua *.r *.m *.swift *.kt *.scala *.vue *.svelte *.ipynb "
+            "*.rtf *.tex *.log *.ini *.cfg *.conf *.toml *.env *.pptx *.xlsx *.xls "
+            "*.png *.jpg *.jpeg *.webp *.bmp *.gif *.tiff *.tif *.svg *.ico)"
+        )
+
+        if not paths:
+            return
+
+        image_paths = [p for p in paths if os.path.splitext(p)[1].lower() in IMAGE_EXTS]
+        text_paths  = [p for p in paths if os.path.splitext(p)[1].lower() not in IMAGE_EXTS]
+
+        if image_paths and text_paths:
+            self._show_attach_error("Mix not allowed:\nuse 1 image OR up to 3 files")
+            return
+
+        if image_paths:
+            path = image_paths[0]
+            pix = QPixmap(path)
+            if pix.isNull():
+                self._show_attach_error("Could not read image")
+                return
+            try:
+                with open(path, "rb") as f:
+                    img_data = base64.b64encode(f.read()).decode("utf-8")
+            except Exception as e:
+                print(f"Image encoding error: {e}")
+                self._show_attach_error("Image read error")
+                return
+
+            self.clear_attachment()
+            self.pending_images = [img_data]
+            thumb = pix.scaled(26, 26, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self.attach_icon_label.setPixmap(thumb)
+            self.attach_icon_label.setText("")
+            self.attach_count_label.hide()
+            self.file_info_label.setText(self._elide(os.path.basename(path), 20))
+            self.preview_frame.show()
+            self.expand_ui()
+            return
+
+        if not text_paths:
+            return
+
+        if self.pending_images:
+            self._show_attach_error("Clear image first")
+            return
+
+        already = len(self.pending_text_files)
+        slots = 3 - already
+        if slots <= 0:
+            self._show_attach_error("Max 3 files already attached")
+            return
+
+        added = 0
+        for path in text_paths[:slots]:
+            try:
+                with open(path, "r", encoding="utf-8", errors="ignore") as f:
+                    content = f.read()
+                self.pending_text_files.append({
+                    "filename": os.path.basename(path),
+                    "content": content
+                })
+                added += 1
+            except Exception as e:
+                print(f"Error reading file {path}: {e}")
+
+        if not added:
+            return
+
+        self.attach_icon_label.setPixmap(QPixmap())
+        self.attach_icon_label.setText("📄")
+        count = len(self.pending_text_files)
+        if count > 1:
+            self.attach_count_label.setText(str(count))
+            self.attach_count_label.show()
+        else:
+            self.attach_count_label.hide()
+
+        if count == 1:
+            self.file_info_label.setText(self._elide(self.pending_text_files[0]["filename"], 20))
+        else:
+            self.file_info_label.setText(f"{count} files attached")
+
+        self.preview_frame.show()
+        self.expand_ui()
+
+    def _show_attach_error(self, msg: str):
+        self.preview_frame.show()
+        self.file_info_label.setText(msg)
+        QTimer.singleShot(2500, self.clear_attachment)
+
+    def _elide(self, text, max_chars=20):
+        return text if len(text) <= max_chars else text[:max_chars - 1] + "…"
+
+    def clear_attachment(self):
+        self.pending_images = []
+        self.pending_text_files = []
+
+        self.preview_frame.hide()
+        self.attach_icon_label.setText("📄")
+        self.attach_icon_label.setPixmap(QPixmap())
+        self.attach_count_label.hide()
+        self.file_info_label.setText("")
+
+        self.expand_ui()
+
+    def get_domain(self, url):
+        try:
+            domain = re.search(r'https?://(?:www\.)?([^/]+)', url)
+            return domain.group(1) if domain else "Unknown Source"
+        except Exception:
+            return "Source"
+
+    def fetch_web_data(self, user_input):
+        try:
+            search_query = urllib.parse.quote(user_input)
+            url = f"https://html.duckduckgo.com/html/?q={search_query}"
+            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0'}
+            
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=10) as response:
+                content = response.read().decode('utf-8')
+                
+                results = re.findall(r'<a class="result__snippet" href="(.*?)"[^>]*>(.*?)</a>', content, re.DOTALL)
+                
+                texts = []
+                sources = set()
+                
+                for link, snippet in results[:6]:
+                    clean_snippet = re.sub(r'<[^>]+>', '', snippet).strip()
+                    if clean_snippet:
+                        texts.append(clean_snippet)
+                    
+                    if 'uddg=' in link:
+                        actual_link = urllib.parse.unquote(link.split('uddg=')[-1].split('&')[0])
+                    else:
+                        actual_link = link
+                    sources.add(self.get_domain(actual_link))
+                
+                return "  ".join(texts), list(sources)
+        except Exception as e:
+            print(f"Web search error: {e}")
+            return "", []
+
+    def fetch_web_response(self, query):
+        try:
+            global _llama_model
+            if _llama_model is None:
+                self.signals.text_received.emit("\n\nError: Model not loaded")
+                self.signals.finished.emit()
+                return
+            
+            context, sources = self.fetch_web_data(query)
+            if not context.strip():
+                context = "No relevant information found from web search."
+            
+            if self.unfiltered_mode:
+                system_instruction = (
+                    "You are DuckLLM. Respond directly without filters. "
+                    "Use Markdown formatting (H2/H3 headings, lists, bold text) to organize your answer. "
+                    "Always respond in the same language as the user."
+                )
+            else:
+                system_instruction = (
+                    "You are DuckLLM, a helpful AI assistant built by Duck Inc. Provide a concise, well-structured response. "
+                    "Use Markdown formatting (H2/H3 headings, lists, bold text) to organize your answer. "
+                    "Always respond in the same language as the user. "
+                    "Do NOT mention you are searching. Just give the answer directly."
+                )
+            
+            # Prepend unfiltered instructions if in unfiltered mode
+            if self.unfiltered_mode and self.unfiltered_instructions:
+                full_prompt = f"[INSTRUCTION]\n{self.unfiltered_instructions}\n\n[CONTEXT]\nContext: {context}\n\n[QUESTION]\n{query}"
+            else:
+                full_prompt = f"{system_instruction}\n\nContext: {context}\n\nQuestion: {query}"
+            
+            messages = [
+                {"role": "system", "content": "You are a helpful assistant answering questions."},
+                {"role": "user", "content": full_prompt}
+            ]
+            
+            try:
+                response = _llama_model.create_chat_completion(
+                    messages=messages,
+                    stream=True,
+                    temperature=0.3,
+                    top_p=0.9
+                )
+                
+                for chunk in response:
+                    if 'choices' in chunk and len(chunk['choices']) > 0:
+                        delta = chunk['choices'][0].get('delta', {})
+                        if 'content' in delta:
+                            token = delta['content']
+                            self.signals.text_received.emit(token)
+            except Exception as e:
+                print(f"[LLAMA WEB ERROR] {e}")
+                self.signals.text_received.emit(f"\n\nError: {str(e)[:100]}")
+            
+            if sources:
+                sources_str = "\n\nSources: " + ", ".join(sources)
+                self.signals.text_received.emit(sources_str)
+                
+        except Exception as e:
+            self.signals.text_received.emit(f"\n\nSearch failed: {str(e)[:100]}")
+        finally:
+            self.signals.finished.emit()
+
+    def start_query(self):
+        query = self.input_field.toPlainText().strip()
+        if not query and not self.pending_images and not self.pending_text_files:
+            return
+
+        full_query = query
+        if self.pending_text_files:
+            parts = []
+            for tf in self.pending_text_files:
+                parts.append(f"File '{tf['filename']}':\n---\n{tf['content']}\n---")
+            context = "\n\n".join(parts)
+            full_query = (
+                f"Use the following file(s) to answer the user's question:\n\n"
+                f"{context}\n\nUser Question: {query}"
+            )
+
+        self._current_stream = ""
+        self._stream_label.setText("")
+        self._stream_label.hide()
+        self.has_content = False
+
+        while self.chat_vbox.count() > 1:  
+            item = self.chat_vbox.takeAt(0)
+            if item.widget() and item.widget() is not self._stream_label:
+                item.widget().deleteLater()
+        self.chat_vbox.insertWidget(0, self._stream_label)
+
+        self._pending_user_query = full_query # Use the combined query
+        self._was_web_mode = self.web_mode
+
+        if self.web_mode:
+            self.is_thinking = True
+            self.input_field.setEnabled(False)
+            self.current_phrase = "Searching Web"
+            self.status_dot.setStyleSheet("background: #FFCC00; border-radius: 4px;")
+            self.thinking_timer.start(300)
+            
+            threading.Thread(
+                target=self.fetch_web_response,
+                args=(full_query,), # Use the combined query
+                daemon=True
+            ).start()
+            return
+        
+        self.is_thinking = True
+        self.input_field.setEnabled(False)
+        
+        self.current_phrase = "Thinking"
+        self.status_dot.setStyleSheet("background: #FFCC00; border-radius: 4px;")
+        self.thinking_timer.start(300)
+        
+        imgs_to_send = list(self.pending_images)
+        threading.Thread(target=self.fetch_llama, args=(full_query, imgs_to_send), daemon=True).start()
+
+    def fetch_llama(self, query, images):
+        try:
+            global _llama_model
+            if _llama_model is None:
+                self.signals.text_received.emit("Error: Llama model is not loaded.")
+                self.signals.finished.emit()
+                return
+
+            if images:
+                content_list = []
+                text_prompt = query or "Describe what you see in this image."
+                content_list.append({"type": "text", "text": text_prompt})
+                
+                for img_data in images:
+                    content_list.append({
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{img_data}"}
+                    })
+                user_msg = {"role": "user", "content": content_list}
+            else:
+                user_msg = {"role": "user", "content": query}
+            
+            self.chat_history.append(user_msg)
+
+            if self.unfiltered_mode:
+                sys_content = (
+                    "You are DuckLLM. Respond directly without filters. Keep responses concise (1-4 sentences unless asked for more). "
+                    "Always use Markdown formatting (H2/H3 headings, lists, bold text, code blocks) to structure your responses. "
+                    "Always respond in the same language as the user's query."
+                )
+            else:
+                sys_content = (
+                    "You are DuckLLM, a helpful AI assistant built by Duck Inc. "
+                    "Always use Markdown formatting (H2/H3 headings, lists, bold text, code blocks) to structure your responses. "
+                    "Always respond in the same language as the user's query."
+                )
+            system_msg = {"role": "system", "content": sys_content}
+            # Prepend unfiltered instructions to user query for better context
+            if self.unfiltered_mode and self.unfiltered_instructions:
+                # Handle both text and vision queries
+                if isinstance(user_msg['content'], list):
+                     for item in user_msg['content']:
+                         if item['type'] == 'text':
+                             item['text'] = f"[INSTRUCTION]\n{self.unfiltered_instructions}\n\n[USER QUERY]\n{item['text']}"
+                             break
+                else:
+                    user_msg["content"] = f"[INSTRUCTION]\n{self.unfiltered_instructions}\n\n[USER QUERY]\n{user_msg['content']}"
+
+            messages = [system_msg] + self.chat_history
+
+            # Call llama model directly with streaming
+            full_assistant_response = ""
+            try:
+                response = _llama_model.create_chat_completion(
+                    messages=messages,
+                    stream=True
+                )
+                
+                for chunk in response:
+                    if 'choices' in chunk and len(chunk['choices']) > 0:
+                        delta = chunk['choices'][0].get('delta', {})
+                        if 'content' in delta:
+                            token = delta['content']
+                            full_assistant_response += token
+                            self.signals.text_received.emit(token)
+            except Exception as e:
+                print(f"[LLAMA ERROR] {e}")
+                error_msg = f"Error: {str(e)}"
+                self.signals.text_received.emit(error_msg)
+                full_assistant_response = error_msg
+            
+            self.chat_history.append({"role": "assistant", "content": full_assistant_response})
+            self.save_chat()
+            
+            if len(self.chat_history) > 10:
+                self.chat_history = self.chat_history[-10:]
+
+            self.signals.finished.emit()
+            
+        except Exception as e:
+            print(f"Chat Error: {e}")
+            self.signals.finished.emit()
+
+    def update_response_ui(self, token):
+        if not self.has_content:
+            self.has_content = True
+            self.thinking_timer.stop()
+            self.label.setText("Responding...")
+            self.status_dot.setStyleSheet("background: #00CCFF; border-radius: 4px;")
+            self._stream_label.show()
+            self.expand_ui()
+
+        self._current_stream += token
+        # Force hard breaks
+        formatted = self._current_stream.replace("\n", "  \n")
+        try:
+            self._stream_label.setText(formatted)
+            self.chat_scroll.verticalScrollBar().setValue(
+                self.chat_scroll.verticalScrollBar().maximum()
+            )
+        except RuntimeError:
+            pass 
+
+    def on_finished(self):
+        self.is_thinking = False
+        self.thinking_timer.stop()
+        self.input_field.setEnabled(True)
+        self.input_field.clear()
+        self.input_field.setFixedHeight(44)
+        self.clear_attachment()  
+        self.label.setText("READY")
+        self.status_dot.setStyleSheet("background: #00FF88; border-radius: 4px;")
+
+        if self._current_stream.strip():
+            self._stream_label.hide()
+            self._stream_label.setText("")
+            msg_widget = ChatMessageWidget(self._current_stream, role="assistant")
+            self.chat_vbox.insertWidget(self.chat_vbox.count() - 1, msg_widget)
+
+            if self._was_web_mode and self._pending_user_query:
+                self.chat_history.append({"role": "user", "content": self._pending_user_query})
+                self.chat_history.append({"role": "assistant", "content": self._current_stream})
+                if len(self.chat_history) > 10:
+                    self.chat_history = self.chat_history[-10:]
+                self.save_chat()
+
+            self._current_stream = ""
+            QTimer.singleShot(50, lambda: self.chat_scroll.verticalScrollBar().setValue(
+                self.chat_scroll.verticalScrollBar().maximum()
+            ))
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    frontend = DuckLLM()
+    frontend.show()
+    sys.exit(app.exec())
