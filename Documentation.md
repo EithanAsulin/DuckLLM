@@ -20,7 +20,9 @@ git clone https://github.com/EithanAsulin/DuckLLM.git
 
 # GGUF 
 - **DuckLLM.gguf:** The Main GGUF Using DuckLLM 1.0 3.1b
+
 ***(Note: Not Included Due To File Size Limitations Although It Can Be Found On Huggingface)***
+
 # Scripts
 - **dmg.sh:** The Compiling Script For MacOS Systems
 - **deb.sh:** The Compiling Script For a Deb Package
