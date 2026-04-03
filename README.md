@@ -3,13 +3,11 @@
 [![Base Model](https://img.shields.io/badge/Base-Qwen2.5%20Apache%202.0-green)](Apache-2.0.license)
 
 # Official Downloads
-<a href="https://snapcraft.io/duckllm">
-    <img alt="Get it from the Snap Store" src=https://snapcraft.io/en/dark/install.svg/>
-  </a>
-
-<a href="https://play.google.com/store/apps/details?id=com.duckllm.app">
-  <img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" height="60">
-</a>
+<p align="left">
+  <a href="https://snapcraft.io/duckllm"><img alt="Get it from the Snap Store" src="assets/images/snap-store.png" height="85"></a>
+  &nbsp;&nbsp;
+  <a href="https://play.google.com/store/apps/details?id=com.duckllm.app"><img alt="Get it on Google Play" src="assets/images/google-play.png" height="85"></a>
+</p>
 
 
 # Official Homepage
