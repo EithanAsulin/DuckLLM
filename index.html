@@ -22,6 +22,7 @@
         }
     </script>
     <style>
+        html { scroll-behavior: smooth; }
         [x-cloak] { display: none !important; }
         .glass {
             background: rgba(255, 255, 255, 0.7);
@@ -57,13 +58,38 @@
     darkMode: false, 
     maximizedImage: null, 
     currentPage: 'home',
+    showDownloadModal: false,
     reviews: [
         { source: 'Google Play Store', username: 'Gilad Hazan', review: 'Nice App, Runs Smoothy And Is Great Overall.' },
         { source: 'Google Play Store', username: 'Plusmovemet5723', review: 'Very Secure And Very Comfortable To Use, Wonderfull App.' },
         { source: 'Google Play Store', username: 'Leo Thomas', review: 'Works Amazing.' },
         { source: 'Google Play Store', username: 'Oshrat Kadosh', review: 'Great To Use' },
         { source: 'GitHub', username: 'Wizard', review: 'DuckLLM is the best local LLM I have used, it helps me in coding and ordinary things, even when surfing the browser!' }
-    ]
+    ],
+    init() {
+        this.updatePageFromHash();
+        window.addEventListener('hashchange', () => this.updatePageFromHash());
+    },
+    updatePageFromHash() {
+        const hash = window.location.hash.substring(1);
+        const installationHashes = ['installation', 'desktop-installation', 'mobile-installation'];
+        if (installationHashes.includes(hash)) {
+            this.currentPage = 'installation';
+            this.$nextTick(() => {
+                const el = document.getElementById(hash);
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+                else window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        } else {
+            this.currentPage = 'home';
+            if (hash) {
+                this.$nextTick(() => {
+                    const el = document.getElementById(hash);
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                });
+            }
+        }
+    }
 }" :class="{ 'dark': darkMode }" class="antialiased">
     <div class="min-h-screen bg-slate-50 dark:bg-dark text-slate-900 dark:text-slate-50 transition-colors duration-300">
         
@@ -80,15 +106,66 @@
                  @click.stop>
         </div>
 
+        <div x-show="showDownloadModal" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             x-cloak
+             class="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm"
+             @click="showDownloadModal = false">
+             
+            <div @click.stop class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-8 max-w-lg w-full relative transform transition-all"
+                 x-show="showDownloadModal"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95">
+                
+                <button @click="showDownloadModal = false" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors text-2xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                
+                <h3 class="text-2xl sm:text-3xl font-black mb-6 text-center">Download DuckLLM</h3>
+                
+                <div class="space-y-6">
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">Desktop</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <a href="placeholder-installer" class="flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-white px-4 py-3 rounded-xl font-bold transition-all">
+                                <i class="fa-brands fa-windows"></i> Windows
+                            </a>
+                            <a href="placeholder-installer" class="flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-white px-4 py-3 rounded-xl font-bold transition-all">
+                                <i class="fa-brands fa-linux"></i> Linux
+                            </a>
+                            <a href="placeholder-installer" class="flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-white px-4 py-3 rounded-xl font-bold transition-all">
+                                <i class="fa-brands fa-apple"></i> macOS
+                            </a>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">Mobile</p>
+                        <a href="https://play.google.com/store/apps/details?id=com.duckllm.app" class="flex items-center justify-center gap-3 bg-green-500 hover:bg-green-600 text-white px-6 py-4 rounded-xl font-bold transition-all shadow-lg shadow-green-500/30">
+                            <i class="fa-brands fa-google-play text-xl"></i> Google Play Store
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <nav class="sticky top-0 z-50 glass border-b border-slate-200 dark:border-slate-800">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
-                    <div class="flex items-center gap-3 cursor-pointer" @click="currentPage = 'home'">
+                    <a href="#" class="flex items-center gap-3 cursor-pointer">
                         <img src="examples/logo_animated.png" alt="DuckLLM Logo" class="w-8 h-8 sm:w-10 sm:h-10 object-contain" onerror="this.style.display='none'">
                         <span class="font-bold text-xl sm:text-2xl tracking-tight">DuckLLM</span>
-                    </div>
+                    </a>
                     <div class="flex items-center gap-4 sm:gap-6">
-                        <button @click="currentPage = 'release-log'" class="font-bold text-[10px] sm:text-sm uppercase tracking-widest hover:text-blue-600 transition-colors">Documentation</button>
+                        <a href="#installation" class="font-bold text-[10px] sm:text-sm uppercase tracking-widest hover:text-blue-600 transition-colors">Installation</a>
                         <button @click="darkMode = !darkMode" 
                                 class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-lg sm:text-xl">
                             <i x-show="!darkMode" class="fa-solid fa-moon text-slate-600"></i>
@@ -100,7 +177,7 @@
         </nav>
 
         <main x-show="currentPage === 'home'">
-            <header class="relative overflow-hidden pt-8 sm:pt-16 pb-20 sm:pb-32">
+            <header id="home" class="relative overflow-hidden pt-8 sm:pt-16 pb-20 sm:pb-32">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
                         
@@ -115,17 +192,12 @@
                                 DuckLLM Is a Private & Secure Local AI, Experience Unparalleled Speeds Without Compromising On Anything
                             </p>
                             
-                            <div class="flex flex-col gap-6 sm:gap-8 w-full">
+                            <div class="flex flex-col gap-8 w-full">
                                 <div class="w-full">
                                     <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3 ml-1">Get The App</p>
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                                        <a href="https://github.com/EithanAsulin/DuckLLM/releases" class="flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-2xl font-bold transition-all shadow-xl shadow-blue-500/30">
-                                            <i class="fa-brands fa-github text-xl"></i> DuckLLM PC
-                                        </a>
-                                        <a href="https://play.google.com/store/apps/details?id=com.duckllm.app" class="flex items-center justify-center gap-3 bg-white dark:bg-slate-800 border-2 border-blue-600 text-blue-600 dark:text-blue-400 px-6 py-4 rounded-2xl font-bold transition-all shadow-lg hover:bg-blue-50">
-                                            <i class="fa-brands fa-google-play text-lg"></i> Play Store
-                                        </a>
-                                    </div>
+                                    <button @click="showDownloadModal = true" class="flex w-full items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-bold transition-all shadow-xl shadow-blue-500/30 text-lg">
+                                        <i class="fa-solid fa-download text-xl"></i> Download DuckLLM
+                                    </button>
                                 </div>
                                 <div class="w-full">
                                     <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3 ml-1">Get Our Model</p>
@@ -155,7 +227,7 @@
                 </div>
             </header>
 
-            <section class="py-16 bg-white dark:bg-slate-900/50 overflow-hidden border-y border-slate-200 dark:border-slate-800">
+            <section id="reviews" class="py-16 bg-white dark:bg-slate-900/50 overflow-hidden border-y border-slate-200 dark:border-slate-800">
                 <div class="text-center mb-10">
                     <h2 class="text-2xl sm:text-3xl font-black tracking-tight uppercase tracking-widest">Reviews From Our Users</h2>
                 </div>
@@ -185,10 +257,10 @@
                 </div>
             </section>
 
-            <section class="py-16 sm:py-24 bg-white dark:bg-slate-900/50 border-y border-slate-200 dark:border-slate-800 overflow-hidden">
+            <section id="demo" class="py-16 sm:py-24 bg-white dark:bg-slate-900/50 border-y border-slate-200 dark:border-slate-800 overflow-hidden">
                 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="text-center mb-12">
-                        <p class="text-[10px] font-black uppercase tracking-[0.3em] text-blue-600 dark:text-blue-400 mb-4">See It In Action</p>
+                        <p class="text-[10px] font-black uppercase tracking-[0.3em] text-blue-600 dark:text-blue-400 mb-4">Learn More About DuckLLM</p>
                         <h2 class="text-4xl sm:text-5xl font-black tracking-tight mb-4">Meet DuckLLM</h2>
                         <div class="h-1 w-20 bg-blue-600 mx-auto rounded-full"></div>
                     </div>
@@ -204,7 +276,7 @@
                 </div>
             </section>
 
-            <section class="py-16 sm:py-24">
+            <section id="features" class="py-16 sm:py-24">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="text-center mb-16">
                         <h2 class="text-3xl sm:text-4xl font-black tracking-tight mb-4 uppercase tracking-widest">What Is DuckLLM Good At?</h2>
@@ -239,10 +311,14 @@
             <section class="py-8 sm:py-12 bg-white dark:bg-slate-900/30 border-y border-slate-200 dark:border-slate-800">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <p class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-6 sm:mb-8">Supported Systems</p>
-                    <div class="flex flex-wrap justify-center items-center gap-8 sm:gap-24 opacity-60">
+                    <div class="flex flex-wrap justify-center items-center gap-8 sm:gap-20 md:gap-24 opacity-60">
                         <div class="flex items-center gap-2 sm:gap-3">
                             <i class="fa-brands fa-windows text-2xl sm:text-3xl"></i>
                             <span class="font-bold text-lg sm:text-xl">Windows</span>
+                        </div>
+                        <div class="flex items-center gap-2 sm:gap-3">
+                            <i class="fa-brands fa-apple text-2xl sm:text-3xl"></i>
+                            <span class="font-bold text-lg sm:text-xl">macOS</span>
                         </div>
                         <div class="flex items-center gap-2 sm:gap-3">
                             <i class="fa-brands fa-linux text-2xl sm:text-3xl"></i>
@@ -256,7 +332,7 @@
                 </div>
             </section>
 
-            <section class="py-16 sm:py-24">
+            <section id="interface" class="py-16 sm:py-24">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="text-center mb-12 sm:mb-16">
                         <h2 class="text-3xl sm:text-4xl font-black tracking-tight mb-4">Application Interface</h2>
@@ -276,7 +352,7 @@
                 </div>
             </section>
 
-            <section class="py-16 sm:py-24 bg-slate-100 dark:bg-slate-900/80 overflow-hidden">
+            <section id="benchmarks" class="py-16 sm:py-24 bg-slate-100 dark:bg-slate-900/80 overflow-hidden">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-10 sm:mb-16 gap-6">
                         <div class="flex items-center gap-4">
@@ -309,7 +385,7 @@
                 </div>
             </section>
 
-            <section class="py-20 sm:py-32 relative overflow-hidden bg-blue-600 dark:bg-blue-800 text-white text-center">
+            <section id="partnership" class="py-20 sm:py-32 relative overflow-hidden bg-blue-600 dark:bg-blue-800 text-white text-center">
                 <div class="absolute top-0 right-0 p-10 sm:p-20 opacity-10 hidden sm:block">
                     <i class="fa-solid fa-handshake text-[15rem] sm:text-[20rem]"></i>
                 </div>
@@ -331,66 +407,94 @@
             </section>
         </main>
 
-        <main x-show="currentPage === 'release-log'" x-cloak class="py-16 sm:py-24">
+        <main x-show="currentPage === 'installation'" x-cloak class="py-16 sm:py-24">
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                <button @click="currentPage = 'home'" class="mb-10 flex items-center gap-2 font-bold text-blue-600 uppercase tracking-widest text-xs sm:text-sm">
+                <a href="#" class="mb-10 flex items-center gap-2 font-bold text-blue-600 uppercase tracking-widest text-xs sm:text-sm">
                     <i class="fa-solid fa-arrow-left"></i> Back to Home
-                </button>
-                <h2 class="text-4xl sm:text-5xl font-black mb-12 tracking-tighter">Documentation</h2>
+                </a>
+                <h2 class="text-4xl sm:text-5xl font-black mb-12 tracking-tighter">Installation</h2>
                 
                 <section class="grid gap-12">
-                    <div class="bg-white dark:bg-slate-800 rounded-3xl p-8 border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <div id="desktop-installation" class="bg-white dark:bg-slate-800 rounded-3xl p-8 border border-slate-200 dark:border-slate-700 shadow-sm">
                         <div class="flex items-center gap-4 mb-8">
                             <i class="fa-solid fa-desktop text-blue-600 text-2xl"></i>
                             <h3 class="text-2xl font-black uppercase tracking-tight">Desktop Installation</h3>
                         </div>
-                        <div class="space-y-6">
-                            <div class="flex gap-4">
-                                <span class="flex-none w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">1</span>
-                                <p class="font-medium pt-1">Download the latest <strong>DuckLLM.zip</strong> from GitHub.</p>
+                        
+                        <div x-data="{ activeTab: 'windows' }">
+                            <div class="mb-6 border-b border-slate-200 dark:border-slate-700">
+                                <div class="flex -mb-px gap-4">
+                                    <button @click="activeTab = 'windows'" 
+                                            :class="{ 'border-blue-600 text-blue-600 dark:text-blue-400': activeTab === 'windows', 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 dark:text-slate-400 dark:hover:text-slate-300 dark:hover:border-slate-500': activeTab !== 'windows' }"
+                                            class="flex items-center gap-2 px-1 py-3 border-b-2 font-bold text-sm transition-colors">
+                                        <i class="fa-brands fa-windows"></i> Windows
+                                    </button>
+                                    <button @click="activeTab = 'linux'" 
+                                            :class="{ 'border-blue-600 text-blue-600 dark:text-blue-400': activeTab === 'linux', 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 dark:text-slate-400 dark:hover:text-slate-300 dark:hover:border-slate-500': activeTab !== 'linux' }"
+                                            class="flex items-center gap-2 px-1 py-3 border-b-2 font-bold text-sm transition-colors">
+                                        <i class="fa-brands fa-linux"></i> Linux
+                                    </button>
+                                    <button @click="activeTab = 'macos'" 
+                                            :class="{ 'border-blue-600 text-blue-600 dark:text-blue-400': activeTab === 'macos', 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 dark:text-slate-400 dark:hover:text-slate-300 dark:hover:border-slate-500': activeTab !== 'macos' }"
+                                            class="flex items-center gap-2 px-1 py-3 border-b-2 font-bold text-sm transition-colors">
+                                        <i class="fa-brands fa-apple"></i> macOS
+                                    </button>
+                                </div>
                             </div>
-                            <div class="flex gap-4">
-                                <span class="flex-none w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">2</span>
-                                <p class="font-medium pt-1">Unzip <strong>DuckLLM.zip</strong>.</p>
-                            </div>
-                            <div class="flex gap-4">
-                                <span class="flex-none w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">3</span>
-                                <div class="w-full">
-                                    <p class="font-medium mb-3">Run <strong>Installer.py</strong>:</p>
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div class="bg-slate-100 dark:bg-slate-900 p-4 rounded-xl border-l-4 border-blue-500">
-                                            <p class="text-[10px] font-black uppercase text-slate-400 mb-1">Windows</p>
-                                            <p class="text-sm">Click on it to run.</p>
-                                        </div>
-                                        <div class="bg-slate-100 dark:bg-slate-900 p-4 rounded-xl border-l-4 border-green-500">
-                                            <p class="text-[10px] font-black uppercase text-slate-400 mb-1">Linux</p>
-                                            <code class="text-xs font-mono text-green-500">python installer.py</code>
+
+                            <div>
+                                <div x-show="activeTab === 'windows'" class="space-y-4">
+                                    <div class="flex gap-4">
+                                        <span class="flex-none w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">1</span>
+                                        <p class="font-medium pt-1">Download <strong>DuckLLM Installer.exe</strong> and open it.</p>
+                                    </div>
+                                    <div class="flex gap-4">
+                                        <span class="flex-none w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">2</span>
+                                        <p class="font-medium pt-1">Accept the license agreement.</p>
+                                    </div>
+                                    <div class="flex gap-4">
+                                        <span class="flex-none w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">3</span>
+                                        <p class="font-medium pt-1">Follow the on-screen prompts to install, and enjoy!</p>
+                                    </div>
+                                </div>
+                                <div x-show="activeTab === 'linux'" x-cloak class="space-y-6">
+                                    <div class="flex gap-4">
+                                        <span class="flex-none w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">1</span>
+                                        <p class="font-medium pt-1">Download and open <strong>DuckLLM.deb</strong>.</p>
+                                    </div>
+                                    <div class="flex gap-4">
+                                        <span class="flex-none w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">2</span>
+                                        <div class="w-full">
+                                            <p class="font-medium mb-3">Install using one of the following options:</p>
+                                            <div class="space-y-4">
+                                                <div class="bg-slate-100 dark:bg-slate-900 p-4 rounded-xl border-l-4 border-slate-300 dark:border-slate-600">
+                                                    <p class="font-bold text-sm mb-1">Option 1: Software Center</p>
+                                                    <p class="text-sm text-slate-600 dark:text-slate-400">Open the file using your distribution's software store and click "Install".</p>
+                                                </div>
+                                                <div class="bg-slate-100 dark:bg-slate-900 p-4 rounded-xl border-l-4 border-slate-300 dark:border-slate-600">
+                                                    <p class="font-bold text-sm mb-1">Option 2: Terminal</p>
+                                                    <p class="text-sm text-slate-600 dark:text-slate-400 mb-2">Navigate to the download directory and run:</p>
+                                                    <code class="text-xs font-mono bg-slate-200 dark:bg-slate-700 p-2 rounded-md block text-green-600 dark:text-green-400">sudo apt install ./DuckLLM.deb</code>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="flex gap-4">
-                                <span class="flex-none w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">4</span>
-                                <p class="font-medium pt-1">Select Your Operating System.</p>
-                            </div>
-                            <div class="flex gap-4">
-                                <span class="flex-none w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">5</span>
-                                <div class="w-full">
-                                    <p class="font-medium mb-3">Create a Shortcut:</p>
-                                    <div class="space-y-3">
-                                        <div class="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700">
-                                            <p class="text-sm"><strong>Windows:</strong> Open <strong>DuckLLM.py</strong> (Inside Desktop/DuckLLM). The shortcut to Show/Hide is <kbd class="px-1.5 py-0.5 bg-white dark:bg-slate-700 rounded border border-slate-300 dark:border-slate-600 text-xs shadow-sm">Del</kbd>.</p>
-                                        </div>
-                                        <div class="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700">
-                                            <p class="text-sm"><strong>Linux:</strong> Create a Shortcut in Settings running: <code class="text-xs text-blue-500 ml-2">python ~/DuckLLM/DuckLLM.py</code></p>
-                                        </div>
+                                <div x-show="activeTab === 'macos'" x-cloak class="space-y-4">
+                                     <div class="flex gap-4">
+                                        <span class="flex-none w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">1</span>
+                                        <p class="font-medium pt-1">Download <strong>DuckLLM Installer.dmg</strong>.</p>
+                                    </div>
+                                    <div class="flex gap-4">
+                                        <span class="flex-none w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">2</span>
+                                        <p class="font-medium pt-1">Open the DMG file, then drag the <strong>DuckLLM</strong> icon into your <strong>Applications</strong> folder.</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="bg-white dark:bg-slate-800 rounded-3xl p-8 border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <div id="mobile-installation" class="bg-white dark:bg-slate-800 rounded-3xl p-8 border border-slate-200 dark:border-slate-700 shadow-sm">
                         <div class="flex items-center gap-4 mb-8">
                             <i class="fa-solid fa-mobile-screen-button text-blue-600 text-2xl"></i>
                             <h3 class="text-2xl font-black uppercase tracking-tight">Mobile Installation</h3>
@@ -418,9 +522,8 @@
                     <span class="font-black text-xl sm:text-2xl text-white tracking-tighter">DuckLLM</span>
                 </div>
                 <div class="flex flex-wrap justify-center gap-6 sm:gap-8 mb-10 sm:mb-12 font-bold uppercase tracking-widest text-[10px] sm:text-xs text-slate-500">
-                    <button @click="currentPage = 'home'" class="hover:text-white transition-colors">Home</button>
-                    <button @click="currentPage = 'release-log'" class="hover:text-white transition-colors">Documentation</button>
-
+                    <a href="#" class="hover:text-white transition-colors">Home</a>
+                    <a href="#installation" class="hover:text-white transition-colors">Installation</a>
                 </div>
                 <p class="font-bold text-xs sm:text-sm">&copy; 2026 Duck Inc. All rights reserved.</p>
                 <p class="text-[10px] mt-3 opacity-40 uppercase tracking-[0.2em] font-black">Created by Eithan Asulin</p>
