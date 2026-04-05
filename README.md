@@ -3,12 +3,13 @@
 [![Base Model](https://img.shields.io/badge/Base-Qwen2.5%20Apache%202.0-green)](Apache-2.0.license)
 
 # Official Downloads
-<p align="left">
-  <a href="https://snapcraft.io/duckllm"><img alt="Get it from the Snap Store" src="assets/images/snap-store.png" height="85"></a>
-  &nbsp;&nbsp;
-  <a href="https://play.google.com/store/apps/details?id=com.duckllm.app"><img alt="Get it on Google Play" src="assets/images/google-play.png" height="85"></a>
-</p>
+<a href="https://snapcraft.io/duckllm">
+    <img alt="Get it from the Snap Store" src=https://snapcraft.io/en/dark/install.svg/>
+  </a>
 
+<a href="https://play.google.com/store/apps/details?id=com.duckllm.app">
+  <img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" height="60">
+</a>
 
 # Official Homepage
 https://eithanasulin.github.io/DuckLLM/
@@ -25,20 +26,20 @@ DuckLLM is a free, locally-run AI designed with a strong focus on privacy and se
 # Getting Started
 
 # Windows
-1. Download [DuckLLM Installer.exe](link)
+1. Download [DuckLLM Installer.exe](https://github.com/EithanAsulin/DuckLLM/releases/download/Mallard/DuckLLM.Installer.exe)
 2. Agree To The License And Install!
 
 > Press `Esc` To Close It.
 
 # Linux
-1. Download [DuckLLM.deb](link)
-2. Open [DuckLLM.deb](link) And Install!
+1. Download [DuckLLM.deb](https://github.com/EithanAsulin/DuckLLM/releases/download/Mallard/DuckLLM.deb)
+2. Open [DuckLLM.deb](https://github.com/EithanAsulin/DuckLLM/releases/download/Mallard/DuckLLM.deb) And Install!
 
 > Press `Esc` To Close It.
 
 # MacOS
-1. Download [DuckLLM Installer.dmg](link)
-2. Open [DuckLLM Installer.dmg](link)
+1. Download [DuckLLM Installer.dmg](https://github.com/EithanAsulin/DuckLLM/releases/download/Mallard/DuckLLM.Installer.dmg)
+2. Open [DuckLLM Installer.dmg](https://github.com/EithanAsulin/DuckLLM/releases/download/Mallard/DuckLLM.Installer.dmg)
 3. Drag **DuckLLM Into The Applications Folder**
 
 > Press `Esc` To Close It.
@@ -68,13 +69,7 @@ DuckLLM is a free, locally-run AI designed with a strong focus on privacy and se
 
 # Known Issues 
 
-# Windows
-***None!***
-
-# Linux
-***None!***
-
-# MacOS
+### MacOS (Not Fixable)
 **Due To Apple's Aggressive Memory Management** on Heavy Workflows **DuckLLM** Might Be Closed By **MacOS,** To Prevent This **DuckLLM Uses a 3.1b Model Only** To Manage Memory Better.
 
 
@@ -82,6 +77,7 @@ DuckLLM is a free, locally-run AI designed with a strong focus on privacy and se
 For inquiries regarding commercial licensing, please reach out via:
 - **Email**: duckinc68@gmail.com
 - **Discord**: https://discord.com/invite/DkNt6FXf7J
+**(This Only Applys For DuckLLM's Model The App Is Free To-Use)**
 
 # Relationship to Qwen
 DuckLLM is built on **Qwen 2.5** as its base model and extends it through fine-tuning aimed at improving performance in specific areas where the base model underperforms. Training a large language model from scratch was outside the scope of this project; the additional training is focused on targeted improvements rather than architectural changes.

@@ -10,7 +10,6 @@ echo [*] Installing PyInstaller and Image tools...
 pip install pyinstaller Pillow
 
 echo [*] NUCLEAR FIX: Downloading stubborn modules directly to your project folder...
-:: This forces the missing module to sit right next to DuckLLM.py so PyInstaller CANNOT miss it.
 pip install typing_extensions --target . --upgrade
 
 echo [*] Converting icon...
@@ -41,18 +40,5 @@ python -m PyInstaller --name "%APP_NAME%" ^
     %ICON_CMD% ^
     "DuckLLM.py"
 
-echo.
-if exist "dist\%APP_NAME%\%APP_NAME%.exe" (
-    echo [+] Build successful! No errors!
-    echo [*] Zipping the folder for redistribution...
-    
-    :: Creates the final zip file you can send to people
-    powershell -Command "Compress-Archive -Path 'dist\%APP_NAME%\*' -DestinationPath '%APP_NAME%_Windows.zip' -Force"
-    
-    echo.
-    echo [!!!] DONE [!!!]
-    echo [+] Send this file to people: %APP_NAME%_Windows.zip
-) else (
-    echo [!] Build failed.
-)
+echo [*] This Purely Produces And exe And A Folder With The Data, Please Use Inno Setup To Create An Installer If You Want One.
 pause
