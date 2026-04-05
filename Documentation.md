@@ -4,6 +4,9 @@ DuckLLM's Source Code Is Accessible Via **git**, To Clone The Source Code Run :
 git clone https://github.com/EithanAsulin/DuckLLM.git
 ```
 
+### Note:
+This Source Code Is an Exact Match Of The Current Local Code, Theres No Hidden Files Or Removed One.
+
 # How To Compile
 
 # Pre-Compile Instructions
