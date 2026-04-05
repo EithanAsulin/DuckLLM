@@ -85,3 +85,5 @@ Instructions on .iss Files
 If You've Encountered Bugs With The Files Or Have Found a Bug/Added Feature You Want In Future Mainline DuckLLM Releases Contact :
 - **Email:** duckinc68@gmail.com
 - **Discord:** https://discord.com/invite/DkNt6FXf7J
+
+**[GO BACK TO MAIN PAGE](https://github.com/EithanAsulin/DuckLLM/blob/master/README.md)**
