@@ -57,15 +57,15 @@ Instructions on .iss Files
 # Files Explained
 
 # DuckLLM.py
-- **DuckLLM.py: ** The Main File That Includes The Backend &&Powered By Llama.cpp** And The Frontend **Powered By PySide6**
+- **DuckLLM.py:** The Main File That Includes The Backend **Powered By Llama.cpp** And The Frontend **Powered By PySide6**
 
 # Fullscreen.html
 - **Fullscreen.html:** As The Name States **Fullscreen Mode.**
 
 # Assets
-- **Web.png: ** Web Search Icon
-- **Unfiltered.png: ** The Unfiltered Mode (Also Known as 18+/Grok Mode) Icon
-- **Attachment.png: ** The File Attach Icon
+- **Web.png:** Web Search Icon
+- **Unfiltered.png:** The Unfiltered Mode (Also Known as 18+/Grok Mode) Icon
+- **Attachment.png:** The File Attach Icon
 - **Unfiltered_Instructions.txt:** a Set Of Instructions For Unfiltered Mode
 
 # GGUF
