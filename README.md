@@ -13,10 +13,13 @@
 https://eithanasulin.github.io/DuckLLM/
 
 # Supported Systems
+- Android
 - Windows
 - macOS
 - Linux
-- Android
+
+### DuckLLM Destkop Announcement
+as of today DuckLLM Desktop won't get any more updates, updates will only come from communuty contribution.
 
 # What is DuckLLM?
 DuckLLM is a free, locally-run AI designed with a strong focus on privacy and security, without compromising on performance or functionality. It simplifies the process of self-hosting an AI model on your own device - for both desktop and mobile - with a privacy-first architecture that ensures your data never leaves your machine.
