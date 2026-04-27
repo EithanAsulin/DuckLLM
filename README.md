@@ -4,9 +4,11 @@
 
 # Official Downloads
 <p align="left">
-  <a href="https://snapcraft.io/duckllm"><img alt="Get it from the Snap Store" src="assets/images/snap-store.png" height="85"></a>
   &nbsp;&nbsp;
   <a href="https://play.google.com/store/apps/details?id=com.duckllm.app"><img alt="Get it on Google Play" src="assets/images/google-play.png" height="85"></a>
+   &nbsp;&nbsp;
+  <a href="https://snapcraft.io/duckllm"><img alt="Get it from the Snap Store" src="assets/images/snap-store.png" height="85"></a>
+
 </p>
 
 # Official Homepage
